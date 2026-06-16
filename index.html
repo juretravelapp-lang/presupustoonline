@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Jure Travel — Presupuesto</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+      background:#0A1526;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
+      padding:16px;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
+      position:relative;
+    }
+
+    /* ── Fondo animado con partículas ── */
+    .bg-glow{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      overflow:hidden;
+    }
+    .bg-glow .orb{
+      position:absolute;
+      border-radius:50%;
+      filter:blur(80px);
+      opacity:0.35;
+      animation:orbFloat 12s ease-in-out infinite alternate;
+    }
+    .bg-glow .orb:nth-child(1){
+      width:400px;height:400px;
+      background:#F59E0B;
+      top:-10%;left:-10%;
+      animation-delay:0s;
+    }
+    .bg-glow .orb:nth-child(2){
+      width:350px;height:350px;
+      background:#F97316;
+      bottom:-10%;right:-10%;
+      animation-delay:-4s;
+    }
+    .bg-glow .orb:nth-child(3){
+      width:250px;height:250px;
+      background:#3B82F6;
+      top:50%;left:50%;
+      transform:translate(-50%,-50%);
+      animation-delay:-8s;
+      opacity:0.15;
+    }
+    @keyframes orbFloat{
+      0%{transform:translate(0,0) scale(1)}
+      33%{transform:translate(30px,-40px) scale(1.1)}
+      66%{transform:translate(-20px,20px) scale(0.9)}
+      100%{transform:translate(10px,-10px) scale(1.05)}
+    }
+
+    /* ── Card principal ── */
+    .card{
+      position:relative;
+      z-index:1;
+      width:100%;
+      max-width:420px;
+      background:rgba(255,255,255,0.03);
+      backdrop-filter:blur(24px);
+      -webkit-backdrop-filter:blur(24px);
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:28px;
+      padding:36px 24px 28px;
+      box-shadow:0 32px 64px -16px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.06);
+      transition:opacity .3s;
+    }
+    .card::before{
+      content:'';
+      position:absolute;
+      inset:-1px;
+      border-radius:28px;
+      padding:1px;
+      background:linear-gradient(135deg,rgba(245,158,11,0.2),transparent 50%,rgba(59,130,246,0.1));
+      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+      -webkit-mask-composite:xor;
+      mask-composite:exclude;
+      pointer-events:none;
+    }
+
+    /* ── Brand ── */
+    .brand{
+      text-align:center;
+      margin-bottom:10px;
+    }
+    .brand-logo{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:4px;
+      text-transform:uppercase;
+      color:#F59E0B;
+      background:rgba(245,158,11,0.08);
+      border:1px solid rgba(245,158,11,0.15);
+      padding:4px 16px 4px 12px;
+      border-radius:99px;
+    }
+    .brand-logo i{font-size:12px}
+
+    /* ── Progress ── */
+    .progress-wrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      margin-top:12px;
+      margin-bottom:30px;
+    }
+    .progress-text{
+      font-size:12px;
+      font-weight:600;
+      color:#9CA3AF;
+      letter-spacing:.3px;
+      min-width:80px;
+      text-align:right;
+    }
+    .progress-dots{
+      display:flex;
+      gap:6px;
+      flex:1;
+      max-width:140px;
+    }
+    .progress-dot{
+      flex:1;
+      height:4px;
+      border-radius:99px;
+      background:rgba(255,255,255,0.08);
+      transition:background .4s,transform .3s;
+    }
+    .progress-dot.active{
+      background:linear-gradient(90deg,#F59E0B,#F97316);
+      transform:scaleY(1.6);
+    }
+    .progress-dot.done{
+      background:#F59E0B;
+    }
+
+    /* ── Steps ── */
+    .step{
+      display:none;
+    }
+    .step.active{
+      display:block;
+      animation:stepIn .4s cubic-bezier(.16,1,.3,1) forwards;
+    }
+    .step.out{
+      display:block;
+      animation:stepOut .25s ease forwards;
+      pointer-events:none;
+      position:absolute;
+      width:calc(100% - 48px);
+    }
+    @keyframes stepIn{
+      from{opacity:0;transform:translateY(18px) scale(.97)}
+      to{opacity:1;transform:translateY(0) scale(1)}
+    }
+    @keyframes stepOut{
+      from{opacity:1;transform:translateY(0) scale(1)}
+      to{opacity:0;transform:translateY(-12px) scale(.97)}
+    }
+    .step-title{
+      font-size:21px;
+      font-weight:800;
+      line-height:1.2;
+      margin-bottom:4px;
+      background:linear-gradient(135deg,#fff 60%,#9CA3AF);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .step-sub{
+      font-size:14px;
+      color:#9CA3AF;
+      margin-bottom:22px;
+    }
+
+    /* ── Inputs ── */
+    .field-group{
+      margin-bottom:18px;
+      position:relative;
+    }
+    .field-label{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:600;
+      color:#9CA3AF;
+      margin-bottom:6px;
+      letter-spacing:.2px;
+      text-transform:uppercase;
+    }
+    .input-wrap{
+      position:relative;
+      display:flex;
+      align-items:center;
+    }
+    .input-wrap .icon{
+      position:absolute;
+      left:14px;
+      color:rgba(255,255,255,0.3);
+      font-size:15px;
+      pointer-events:none;
+      transition:color .25s;
+      z-index:1;
+    }
+    .input-wrap:focus-within .icon{
+      color:#F59E0B;
+    }
+    .input-wrap input,.input-wrap select{
+      width:100%;
+      height:54px;
+      padding:0 14px 0 44px;
+      background:rgba(255,255,255,0.04);
+      border:1.5px solid rgba(255,255,255,0.07);
+      border-radius:14px;
+      color:#fff;
+      font-size:15px;
+      font-family:inherit;
+      outline:none;
+      transition:border .25s,box-shadow .3s,background .25s;
+    }
+    .input-wrap input:focus,.input-wrap select:focus{
+      border-color:#F59E0B;
+      background:rgba(245,158,11,0.04);
+      box-shadow:0 0 0 4px rgba(245,158,11,0.1),0 4px 20px rgba(245,158,11,0.05);
+    }
+    .input-wrap input::placeholder{color:rgba(255,255,255,0.2)}
+    .input-wrap input.is-valid{
+      border-color:rgba(16,185,129,0.4);
+      background:rgba(16,185,129,0.04);
+    }
+    .input-wrap input.is-valid~.icon{color:#10B981}
+    .input-wrap input.is-error{
+      border-color:rgba(239,68,68,0.5);
+      background:rgba(239,68,68,0.04);
+    }
+    .input-wrap input.is-error~.icon{color:#EF4444}
+    .input-wrap.no-icon input{padding-left:16px}
+    .input-wrap input[type="date"]::-webkit-calendar-picker-indicator{
+      filter:invert(.6);
+      cursor:pointer;
+      opacity:.6;
+      transition:opacity .2s;
+    }
+    .input-wrap input[type="date"]:focus::-webkit-calendar-picker-indicator{opacity:1}
+
+    /* ── Inline validation ── */
+    .field-error{
+      font-size:12px;
+      color:#FCA5A5;
+      margin-top:6px;
+      display:none;
+      align-items:center;
+      gap:4px;
+    }
+    .field-error.active{display:flex}
+
+    /* ── Passenger cards ── */
+    .passenger-card{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.07);
+      border-radius:16px;
+      padding:18px 20px;
+      margin-bottom:12px;
+      transition:border-color .25s,background .25s;
+    }
+    .passenger-card:hover{
+      border-color:rgba(255,255,255,0.12);
+      background:rgba(255,255,255,0.06);
+    }
+    .passenger-info{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .passenger-info .p-icon{
+      width:40px;height:40px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:18px;
+      background:rgba(245,158,11,0.1);
+      color:#F59E0B;
+    }
+    .passenger-info h4{font-size:15px;font-weight:600}
+    .passenger-info p{font-size:13px;color:#9CA3AF;margin-top:1px}
+    .stepper{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .stepper button{
+      width:38px;height:38px;
+      border-radius:50%;
+      border:1.5px solid rgba(255,255,255,0.12);
+      background:rgba(255,255,255,0.04);
+      color:#fff;
+      font-size:17px;
+      font-weight:600;
+      cursor:pointer;
+      transition:background .2s,border-color .2s,transform .15s;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+    }
+    .stepper button:hover{
+      background:rgba(245,158,11,0.15);
+      border-color:#F59E0B;
+    }
+    .stepper button:active{transform:scale(.92)}
+    .stepper button:disabled{
+      opacity:.25;
+      cursor:not-allowed;
+      border-color:rgba(255,255,255,0.06);
+      background:transparent;
+    }
+    .stepper span{
+      font-size:20px;
+      font-weight:700;
+      min-width:28px;
+      text-align:center;
+      color:#fff;
+    }
+
+    /* ── Buttons ── */
+    .btn{
+      width:100%;
+      height:54px;
+      border:none;
+      border-radius:14px;
+      font-size:16px;
+      font-weight:700;
+      font-family:inherit;
+      cursor:pointer;
+      transition:transform .2s,box-shadow .3s,opacity .25s,background .25s;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      position:relative;
+      overflow:hidden;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn:active{transform:scale(.97)}
+    .btn-primary{
+      background:linear-gradient(135deg,#F59E0B,#F97316);
+      color:#0A1526;
+      box-shadow:0 4px 20px rgba(245,158,11,0.25);
+    }
+    .btn-primary:hover{
+      box-shadow:0 8px 32px rgba(245,158,11,0.4);
+      transform:translateY(-1px);
+    }
+    .btn-primary:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none !important;
+      box-shadow:none !important;
+    }
+    .btn-secondary{
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.08);
+      color:rgba(255,255,255,0.7);
+      height:48px;
+      font-weight:600;
+      font-size:14px;
+      margin-top:8px;
+    }
+    .btn-secondary:hover{
+      background:rgba(255,255,255,0.08);
+      color:#fff;
+    }
+    .btn .ripple{
+      position:absolute;
+      border-radius:50%;
+      background:rgba(255,255,255,0.3);
+      transform:scale(0);
+      animation:rippleAnim .6s ease-out;
+      pointer-events:none;
+    }
+    @keyframes rippleAnim{
+      to{transform:scale(4);opacity:0}
+    }
+
+    /* ── Spinner ── */
+    .spinner{
+      width:20px;height:20px;
+      border:2.5px solid rgba(10,21,38,0.2);
+      border-top-color:#0A1526;
+      border-radius:50%;
+      animation:spin .55s linear infinite;
+      flex-shrink:0;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Success ── */
+    .success-screen{
+      display:none;
+      text-align:center;
+      padding:32px 0 12px;
+    }
+    .success-screen.active{
+      display:block;
+      animation:stepIn .5s cubic-bezier(.16,1,.3,1) forwards;
+    }
+    .success-check{
+      width:88px;height:88px;
+      border-radius:50%;
+      background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(16,185,129,0.05));
+      border:2px solid rgba(16,185,129,0.2);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin:0 auto 20px;
+      position:relative;
+    }
+    .success-check svg{
+      width:44px;height:44px;
+      stroke:#10B981;
+      stroke-width:3;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      stroke-dasharray:80;
+      stroke-dashoffset:80;
+      animation:drawCheck .6s ease .3s forwards;
+    }
+    @keyframes drawCheck{
+      to{stroke-dashoffset:0}
+    }
+    .success-check::after{
+      content:'';
+      position:absolute;
+      inset:-8px;
+      border-radius:50%;
+      border:1.5px solid rgba(16,185,129,0.08);
+      animation:pulseRing 2s ease-in-out infinite;
+    }
+    @keyframes pulseRing{
+      0%,100%{transform:scale(1);opacity:1}
+      50%{transform:scale(1.1);opacity:0}
+    }
+    .success-title{
+      font-size:23px;
+      font-weight:800;
+      margin-bottom:6px;
+    }
+    .success-sub{
+      color:rgba(255,255,255,0.5);
+      font-size:15px;
+      line-height:1.6;
+      max-width:280px;
+      margin:0 auto;
+    }
+
+    /* ── Error ── */
+    .error-msg{
+      background:rgba(239,68,68,0.1);
+      border:1px solid rgba(239,68,68,0.2);
+      border-radius:14px;
+      padding:12px 16px;
+      font-size:13px;
+      color:#FCA5A5;
+      margin-bottom:18px;
+      display:none;
+      align-items:center;
+      gap:10px;
+    }
+    .error-msg.active{display:flex}
+    .error-msg i{color:#EF4444;font-size:16px;flex-shrink:0}
+
+    /* ── Resumen antes de enviar ── */
+    .summary-row{
+      display:flex;
+      justify-content:space-between;
+      padding:8px 0;
+      border-bottom:1px solid rgba(255,255,255,0.04);
+      font-size:14px;
+    }
+    .summary-row:last-child{border-bottom:none}
+    .summary-row .label{color:#9CA3AF}
+    .summary-row .value{font-weight:600}
+
+    /* ── Responsive ── */
+    @media(max-width:420px){
+      .card{padding:28px 16px 24px;border-radius:22px}
+      .step-title{font-size:19px}
+      .input-wrap input,.btn{height:50px}
+      .btn{font-size:15px}
+      .passenger-card{padding:14px 16px}
+      .passenger-info .p-icon{width:34px;height:34px;font-size:15px}
+    }
+  </style>
+</head>
+<body>
+  <!-- Orbes de fondo animados -->
+  <div class="bg-glow">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <div class="card" id="app">
+    <!-- Brand -->
+    <div class="brand">
+      <span class="brand-logo"><i class="fas fa-star"></i> Jure Travel</span>
+    </div>
+
+    <!-- Progress dots -->
+    <div class="progress-wrap">
+      <span class="progress-text" id="progressLabel">Paso 1 de 4</span>
+      <div class="progress-dots" id="progressDots">
+        <div class="progress-dot active" data-dot="1"></div>
+        <div class="progress-dot" data-dot="2"></div>
+        <div class="progress-dot" data-dot="3"></div>
+        <div class="progress-dot" data-dot="4"></div>
+      </div>
+    </div>
+
+    <!-- Error alert -->
+    <div class="error-msg" id="errorMsg"><i class="fas fa-exclamation-circle"></i> <span id="errorText"></span></div>
+
+    <!-- ===== STEP 1 – Destinos ===== -->
+    <div class="step active" data-step="1">
+      <div class="step-title">¿A dónde vamos?</div>
+      <div class="step-sub">Dinos tu punto de partida y el destino soñado</div>
+      <div class="field-group">
+        <label class="field-label"><i class="fas fa-plane-departure"></i> Ciudad de origen</label>
+        <div class="input-wrap">
+          <i class="fas fa-location-dot icon"></i>
+          <input type="text" id="origen" placeholder="Ej: Madrid, CDMX, Bogotá" autocomplete="off" />
+        </div>
+        <div class="field-error" id="errOrigen"><i class="fas fa-circle-exclamation"></i> Ingresa tu ciudad de origen</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label"><i class="fas fa-map-pin"></i> Destino soñado</label>
+        <div class="input-wrap">
+          <i class="fas fa-globe icon"></i>
+          <input type="text" id="destino" placeholder="Ej: Tokio, Cancún, París" autocomplete="off" />
+        </div>
+        <div class="field-error" id="errDestino"><i class="fas fa-circle-exclamation"></i> Ingresa tu destino soñado</div>
+      </div>
+      <button class="btn btn-primary" onclick="nextStep()">Siguiente <i class="fas fa-arrow-right"></i></button>
+    </div>
+
+    <!-- ===== STEP 2 – Fechas ===== -->
+    <div class="step" data-step="2">
+      <div class="step-title">Fechas del viaje</div>
+      <div class="step-sub">Selecciona los días de ida y regreso</div>
+      <div class="field-group">
+        <label class="field-label"><i class="fas fa-calendar-day"></i> Fecha de ida</label>
+        <div class="input-wrap">
+          <i class="fas fa-right-to-bracket icon"></i>
+          <input type="date" id="fechaIda" />
+        </div>
+        <div class="field-error" id="errIda"><i class="fas fa-circle-exclamation"></i> Selecciona la fecha de ida</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label"><i class="fas fa-calendar-check"></i> Fecha de vuelta</label>
+        <div class="input-wrap">
+          <i class="fas fa-right-from-bracket icon"></i>
+          <input type="date" id="fechaVuelta" />
+        </div>
+        <div class="field-error" id="errVuelta"><i class="fas fa-circle-exclamation"></i> Selecciona la fecha de vuelta</div>
+      </div>
+      <button class="btn btn-primary" onclick="nextStep()">Siguiente <i class="fas fa-arrow-right"></i></button>
+      <button class="btn btn-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Atrás</button>
+    </div>
+
+    <!-- ===== STEP 3 – Pasajeros ===== -->
+    <div class="step" data-step="3">
+      <div class="step-title">Pasajeros</div>
+      <div class="step-sub">¿Cuántos viajan en esta aventura?</div>
+      <div class="passenger-card">
+        <div class="passenger-info">
+          <div class="p-icon"><i class="fas fa-user"></i></div>
+          <div>
+            <h4>Adultos</h4>
+            <p>Mayores de 12 años</p>
+          </div>
+        </div>
+        <div class="stepper">
+          <button onclick="adjust('adultos',-1)" id="adultosMinus" disabled>−</button>
+          <span id="adultosVal">1</span>
+          <button onclick="adjust('adultos',1)" id="adultosPlus">+</button>
+        </div>
+      </div>
+      <div class="passenger-card">
+        <div class="passenger-info">
+          <div class="p-icon"><i class="fas fa-child"></i></div>
+          <div>
+            <h4>Niños</h4>
+            <p>De 2 a 12 años</p>
+          </div>
+        </div>
+        <div class="stepper">
+          <button onclick="adjust('ninos',-1)" id="ninosMinus" disabled>−</button>
+          <span id="ninosVal">0</span>
+          <button onclick="adjust('ninos',1)" id="ninosPlus">+</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="nextStep()">Siguiente <i class="fas fa-arrow-right"></i></button>
+      <button class="btn btn-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Atrás</button>
+    </div>
+
+    <!-- ===== STEP 4 – Contacto ===== -->
+    <div class="step" data-step="4">
+      <div class="step-title">Tus datos</div>
+      <div class="step-sub">Para enviarte el presupuesto personalizado</div>
+
+      <!-- Mini resumen -->
+      <div style="background:rgba(255,255,255,0.03);border-radius:14px;padding:12px 16px;margin-bottom:20px;border:1px solid rgba(255,255,255,0.05)">
+        <div class="summary-row"><span class="label">Ruta</span><span class="value" id="resumenRuta">—</span></div>
+        <div class="summary-row"><span class="label">Fechas</span><span class="value" id="resumenFechas">—</span></div>
+        <div class="summary-row"><span class="label">Pasajeros</span><span class="value" id="resumenPasajeros">—</span></div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label"><i class="fas fa-user"></i> Nombre completo</label>
+        <div class="input-wrap no-icon">
+          <input type="text" id="nombre" placeholder="Ej: Ana García" autocomplete="name" />
+        </div>
+        <div class="field-error" id="errNombre"><i class="fas fa-circle-exclamation"></i> Ingresa tu nombre</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label"><i class="fab fa-whatsapp" style="color:#25D366"></i> WhatsApp</label>
+        <div class="input-wrap">
+          <i class="fab fa-whatsapp icon" style="color:rgba(255,255,255,0.3)"></i>
+          <input type="tel" id="whatsapp" placeholder="Ej: +34 612 345 678" autocomplete="tel" />
+        </div>
+        <div class="field-error" id="errWhatsapp"><i class="fas fa-circle-exclamation"></i> Ingresa tu WhatsApp</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label"><i class="fas fa-envelope"></i> Correo electrónico</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope icon"></i>
+          <input type="email" id="email" placeholder="Ej: ana@ejemplo.com" autocomplete="email" />
+        </div>
+        <div class="field-error" id="errEmail"><i class="fas fa-circle-exclamation"></i> Ingresa un email válido</div>
+      </div>
+      <button class="btn btn-primary" id="submitBtn" onclick="submitLead()">
+        <span id="submitText">Solicitar presupuesto</span>
+        <div class="spinner" id="submitSpinner" style="display:none;"></div>
+      </button>
+      <button class="btn btn-secondary" onclick="prevStep()"><i class="fas fa-arrow-left"></i> Atrás</button>
+    </div>
+
+    <!-- ===== SUCCESS ===== -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-check">
+        <svg viewBox="0 0 44 44"><polyline points="8,22 18,32 36,12"/></svg>
+      </div>
+      <div class="success-title">¡Viaje en proceso!</div>
+      <div class="success-sub">Un experto en viajes te contactará pronto con el mejor presupuesto para ti.</div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════
+    //  CONFIGURACIÓN SUPABASE
+    // ═══════════════════════════════════════════════════════════════
+    const SUPABASE_URL = 'https://yqtoicuvbhwxktbkngrf.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_ED7m8Uly8eRg1eW_WFnZWg_UujXkaqi';
+
+    let supabase = null;
+    if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+      supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  ESTADO
+    // ═══════════════════════════════════════════════════════════════
+    let currentStep = 1;
+    const totalSteps = 4;
+    const counters = { adultos: 1, ninos: 0 };
+    let isTransitioning = false;
+
+    // ═══════════════════════════════════════════════════════════════
+    //  PROGRESS
+    // ═══════════════════════════════════════════════════════════════
+    function updateProgress() {
+      document.getElementById('progressLabel').textContent = `Paso ${currentStep} de ${totalSteps}`;
+      document.querySelectorAll('.progress-dot').forEach((dot, i) => {
+        const num = i + 1;
+        dot.classList.toggle('active', num === currentStep);
+        dot.classList.toggle('done', num < currentStep);
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  NAVEGACIÓN
+    // ═══════════════════════════════════════════════════════════════
+    function goToStep(n) {
+      if (isTransitioning) return;
+      isTransitioning = true;
+
+      const oldEl = document.querySelector(`.step[data-step="${currentStep}"]`);
+      const newEl = document.querySelector(`.step[data-step="${n}"]`);
+
+      oldEl.classList.remove('active');
+      oldEl.classList.add('out');
+
+      setTimeout(() => {
+        oldEl.classList.remove('out');
+        newEl.classList.add('active');
+        currentStep = n;
+        updateProgress();
+        hideError();
+        isTransitioning = false;
+        autoFocus();
+        if (n === 4) updateResumen();
+      }, 260);
+    }
+
+    function nextStep() {
+      if (!validateStep(currentStep)) return;
+      if (currentStep < totalSteps) goToStep(currentStep + 1);
+    }
+
+    function prevStep() {
+      if (currentStep > 1 && !isTransitioning) goToStep(currentStep - 1);
+    }
+
+    function autoFocus() {
+      const el = document.querySelector(`.step[data-step="${currentStep}"] input`);
+      if (el) setTimeout(() => el.focus(), 320);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  KEYBOARD — Enter para avanzar
+    // ═══════════════════════════════════════════════════════════════
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const step = document.querySelector('.step.active');
+        if (step) {
+          const btn = step.querySelector('.btn-primary');
+          if (btn && !btn.disabled) btn.click();
+        }
+      }
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    //  VALIDACIÓN
+    // ═══════════════════════════════════════════════════════════════
+    function hideError() {
+      const el = document.getElementById('errorMsg');
+      el.classList.remove('active');
+      document.querySelectorAll('.field-error').forEach(e => e.classList.remove('active'));
+      document.querySelectorAll('.input-wrap input.is-error').forEach(e => e.classList.remove('is-error'));
+    }
+
+    function showError(msg) {
+      document.getElementById('errorText').textContent = msg;
+      document.getElementById('errorMsg').classList.add('active');
+    }
+
+    function validateStep(step) {
+      hideError();
+      if (step === 1) {
+        const o = document.getElementById('origen').value.trim();
+        const d = document.getElementById('destino').value.trim();
+        let ok = true;
+        if (!o) { document.getElementById('errOrigen').classList.add('active'); document.getElementById('origen').classList.add('is-error'); ok = false; }
+        if (!d) { document.getElementById('errDestino').classList.add('active'); document.getElementById('destino').classList.add('is-error'); ok = false; }
+        if (!ok) { showError('Completa el origen y el destino antes de continuar.'); return false; }
+      }
+      if (step === 2) {
+        const ida = document.getElementById('fechaIda').value;
+        const vuelta = document.getElementById('fechaVuelta').value;
+        let ok = true;
+        if (!ida) { document.getElementById('errIda').classList.add('active'); document.getElementById('fechaIda').classList.add('is-error'); ok = false; }
+        if (!vuelta) { document.getElementById('errVuelta').classList.add('active'); document.getElementById('fechaVuelta').classList.add('is-error'); ok = false; }
+        if (ida && vuelta && vuelta < ida) { showError('La vuelta debe ser posterior a la ida.'); return false; }
+        if (!ok) { showError('Selecciona ambas fechas para continuar.'); return false; }
+      }
+      if (step === 4) {
+        const nom = document.getElementById('nombre').value.trim();
+        const wa = document.getElementById('whatsapp').value.trim();
+        const em = document.getElementById('email').value.trim();
+        let ok = true;
+        if (!nom) { document.getElementById('errNombre').classList.add('active'); document.getElementById('nombre').classList.add('is-error'); ok = false; }
+        if (!wa) { document.getElementById('errWhatsapp').classList.add('active'); document.getElementById('whatsapp').classList.add('is-error'); ok = false; }
+        if (!em || !em.includes('@')) { document.getElementById('errEmail').classList.add('active'); document.getElementById('email').classList.add('is-error'); ok = false; }
+        if (!ok) { showError('Completa todos tus datos de contacto.'); return false; }
+      }
+      return true;
+    }
+
+    // ── Limpiar error inline al escribir ──
+    document.querySelectorAll('.input-wrap input').forEach(inp => {
+      inp.addEventListener('input', function() {
+        this.classList.remove('is-error');
+        const parent = this.closest('.field-group');
+        if (parent) {
+          const err = parent.querySelector('.field-error');
+          if (err) err.classList.remove('active');
+        }
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    //  STEPPER
+    // ═══════════════════════════════════════════════════════════════
+    function adjust(key, delta) {
+      const min = key === 'adultos' ? 1 : 0;
+      const newVal = Math.max(min, Math.min(20, counters[key] + delta));
+      counters[key] = newVal;
+      document.getElementById(key + 'Val').textContent = newVal;
+      document.getElementById(key + 'Minus').disabled = newVal <= min;
+      document.getElementById(key + 'Plus').disabled = newVal >= 20;
+      if (currentStep === 4) updateResumen();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  RESUMEN
+    // ═══════════════════════════════════════════════════════════════
+    function updateResumen() {
+      const o = document.getElementById('origen').value.trim() || '—';
+      const d = document.getElementById('destino').value.trim() || '—';
+      document.getElementById('resumenRuta').textContent = `${o} → ${d}`;
+
+      const ida = document.getElementById('fechaIda').value || '—';
+      const vuelta = document.getElementById('fechaVuelta').value || '—';
+      document.getElementById('resumenFechas').textContent = ida !== '—' || vuelta !== '—' ? `${ida} → ${vuelta}` : '—';
+
+      const ads = counters.adultos;
+      const nins = counters.ninos;
+      const parts = [];
+      if (ads) parts.push(`${ads} adulto${ads > 1 ? 's' : ''}`);
+      if (nins) parts.push(`${nins} niño${nins > 1 ? 's' : ''}`);
+      document.getElementById('resumenPasajeros').textContent = parts.length ? parts.join(', ') : '—';
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  ENVÍO
+    // ═══════════════════════════════════════════════════════════════
+    function getFormData() {
+      return {
+        origen: document.getElementById('origen').value.trim(),
+        destino: document.getElementById('destino').value.trim(),
+        fecha_ida: document.getElementById('fechaIda').value,
+        fecha_vuelta: document.getElementById('fechaVuelta').value,
+        adultos: counters.adultos,
+        ninos: counters.ninos,
+        nombre: document.getElementById('nombre').value.trim(),
+        whatsapp: document.getElementById('whatsapp').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        created_at: new Date().toISOString()
+      };
+    }
+
+    async function submitLead() {
+      hideError();
+      if (!validateStep(4)) return;
+
+      const data = getFormData();
+      const btn = document.getElementById('submitBtn');
+      const text = document.getElementById('submitText');
+      const spinner = document.getElementById('submitSpinner');
+      btn.disabled = true;
+      text.textContent = 'Procesando...';
+      spinner.style.display = 'inline-block';
+
+      try {
+        if (supabase) {
+          const { error } = await supabase.from('leads_viajes').insert([data]);
+          if (error) throw error;
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 1200));
+        }
+
+        document.getElementById('successScreen').classList.add('active');
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+        document.querySelector('.progress-wrap').style.display = 'none';
+        btn.style.display = 'none';
+      } catch (err) {
+        showError(err.message || 'Error al enviar. Intenta de nuevo.');
+      } finally {
+        btn.disabled = false;
+        text.textContent = 'Solicitar presupuesto';
+        spinner.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
