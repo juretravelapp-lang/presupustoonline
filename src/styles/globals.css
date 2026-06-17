@@ -1,0 +1,450 @@
+/* ─── Google Fonts ──────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800&display=swap');
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────────── */
+@theme {
+  /* Background palette – deep navy dark */
+  --color-app-bg:           #0A1526;
+  --color-app-bg-2:         #0F1E35;
+  --color-surface:          rgba(255,255,255,0.04);
+  --color-surface-hover:    rgba(255,255,255,0.07);
+  --color-surface-card:     rgba(255,255,255,0.05);
+  --color-surface-elevated: rgba(255,255,255,0.08);
+
+  /* Brand amber accent */
+  --color-accent:           #F59E0B;
+  --color-accent-hover:     #FBBF24;
+  --color-accent-muted:     rgba(245,158,11,0.12);
+  --color-accent-border:    rgba(245,158,11,0.3);
+
+  /* Text */
+  --color-text-primary:     #F0F4FF;
+  --color-text-secondary:   #94A3B8;
+  --color-text-muted:       #64748B;
+
+  /* Borders */
+  --color-border:           rgba(255,255,255,0.09);
+  --color-border-focus:     rgba(245,158,11,0.6);
+
+  /* Status */
+  --color-error:            #F87171;
+  --color-error-bg:         rgba(248,113,113,0.1);
+  --color-success:          #34D399;
+  --color-success-bg:       rgba(52,211,153,0.1);
+
+  /* Radius */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   18px;
+  --radius-2xl:  24px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Poppins', var(--font-sans);
+
+  /* Shadows */
+  --shadow-glow:    0 0 40px rgba(245,158,11,0.12);
+  --shadow-card:    0 4px 32px rgba(0,0,0,0.4);
+  --shadow-button:  0 4px 20px rgba(245,158,11,0.3);
+
+  /* Easing */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: clamp(14px, 3.5vw, 16px);
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  /* Full app dark gradient background */
+  background: linear-gradient(160deg, #0A1526 0%, #0F1E35 45%, #0D2040 100%);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+img, picture, video, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button, a[role="button"], a, input, textarea, select {
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ─── Focus ──────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Selection ──────────────────────────────────────────────────── */
+::selection { background: rgba(245,158,11,0.3); color: #fff; }
+
+/* ─── Accessibility ──────────────────────────────────────────────── */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0,0,0,0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 12px 24px;
+  background: var(--color-accent);
+  color: #0A1526;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: top 0.2s var(--ease-out);
+}
+.skip-link:focus { top: 12px; }
+
+/* ─── Safe Areas ─────────────────────────────────────────────────── */
+.safe-area-top    { padding-top:    env(safe-area-inset-top, 0px); }
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 16px); }
+
+/* ─── Mobile font sizes ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+  button, a, [role="button"], input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* ─── Keyframes ──────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes bounceIn {
+  0%   { transform: scale(0.3); opacity: 0; }
+  50%  { transform: scale(1.06); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+  50%       { box-shadow: 0 0 0 8px rgba(245,158,11,0.12); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+/* ─── Utility animation classes ──────────────────────────────────── */
+.animate-fade-in      { animation: fadeIn 0.25s var(--ease-out) both; }
+.animate-fade-in-up   { animation: fadeInUp 0.35s var(--ease-out) both; }
+.animate-scale-in     { animation: scaleIn 0.25s var(--ease-out) both; }
+.animate-bounce-in    { animation: bounceIn 0.5s var(--ease-spring) both; }
+.animate-spin         { animation: spin 1s linear infinite; }
+.animate-float        { animation: float 3s ease-in-out infinite; }
+.animate-pulse-glow   { animation: pulse-glow 2s ease-in-out infinite; }
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.20s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.30s; }
+
+/* ─── Glass card ─────────────────────────────────────────────────── */
+.glass-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+/* ─── Gradient text ──────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 50%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Input base ─────────────────────────────────────────────────── */
+.input-dark {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.09);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  outline: none;
+  -webkit-appearance: none;
+}
+.input-dark::placeholder {
+  color: rgba(148,163,184,0.5);
+  font-weight: 400;
+}
+.input-dark:hover {
+  border-color: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+}
+.input-dark:focus {
+  border-color: var(--color-accent);
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
+}
+.input-dark.has-error {
+  border-color: var(--color-error);
+  background: var(--color-error-bg);
+}
+.input-dark::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+}
+
+/* ─── Option chip (toggle buttons) ──────────────────────────────── */
+.option-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s var(--ease-out);
+  text-align: left;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.option-chip:hover {
+  border-color: rgba(245,158,11,0.35);
+  background: rgba(245,158,11,0.06);
+  color: var(--color-text-primary);
+}
+.option-chip.selected {
+  background: rgba(245,158,11,0.12);
+  border-color: rgba(245,158,11,0.5);
+  color: #FBBF24;
+  box-shadow: 0 2px 16px rgba(245,158,11,0.1);
+}
+.option-chip:active { transform: scale(0.98); }
+
+/* ─── Counter button ─────────────────────────────────────────────── */
+.counter-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text-primary);
+  font-size: 20px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.counter-btn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: rgba(245,158,11,0.08);
+}
+.counter-btn:active:not(:disabled) { transform: scale(0.88); }
+.counter-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* ─── CTA Button ─────────────────────────────────────────────────── */
+.btn-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 28px;
+  height: 56px;
+  background: var(--color-accent);
+  color: #0A1526;
+  font-weight: 800;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  box-shadow: var(--shadow-button);
+  letter-spacing: -0.01em;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-cta:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  box-shadow: 0 6px 28px rgba(245,158,11,0.4);
+  transform: translateY(-1px);
+}
+.btn-cta:active:not(:disabled) { transform: scale(0.97) translateY(0); }
+.btn-cta:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-ghost {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px;
+  height: 44px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-ghost:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: var(--color-text-primary);
+  background: rgba(255,255,255,0.05);
+}
+.btn-ghost:active { transform: scale(0.97); }
+
+/* ─── Step icon bubble ───────────────────────────────────────────── */
+.step-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-lg);
+  background: rgba(245,158,11,0.12);
+  border: 1.5px solid rgba(245,158,11,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--color-accent);
+}
+
+/* ─── Progress dots ──────────────────────────────────────────────── */
+.progress-dot {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.1);
+  transition: all 0.35s var(--ease-out);
+}
+.progress-dot.done    { background: var(--color-accent); width: 18px; }
+.progress-dot.current { background: var(--color-accent); width: 26px; }
+.progress-dot.pending { width: 6px; }
+
+/* ─── Label ──────────────────────────────────────────────────────── */
+.input-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+/* ─── Error text ─────────────────────────────────────────────────── */
+.error-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-error);
+  margin-top: 6px;
+}
+
+/* ─── Chip tag ───────────────────────────────────────────────────── */
+.chip-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #FBBF24;
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
