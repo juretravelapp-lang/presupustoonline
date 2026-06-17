@@ -74,6 +74,9 @@ export interface TravelQuoteRow {
   notas_crm?: string | null
   pricing_detalles?: PricingDetalles | null
   historial?: HistorialEstado[] | null
+  dates?: {
+    fechas_por_destino: Record<string, { fecha_salida: string; fecha_regreso: string }>
+  } | null
   created_at: string
   updated_at: string
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { updateQuoteDetails, getMeetingsForQuote, deleteMeeting, type TravelQuoteRow, type PricingDetalles, type ProveedorPrecio, type CrmMeeting } from '@/lib/supabase'
 import { MeetingFormModal } from './MeetingFormModal'
-import { X, Calendar, DollarSign, FileText, CheckCircle, Printer, Save, Clock, Plus, Trash2, Edit3, MapPin, Video, Phone, Loader2 } from 'lucide-react'
+import { X, Calendar, DollarSign, FileText, CheckCircle, Printer, Save, Clock, Plus, Trash2, MapPin, Video, Phone, Loader2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 interface ModalProps {
@@ -12,7 +12,7 @@ interface ModalProps {
 
 type TabType = 'general' | 'agenda' | 'pricing'
 
-export function QuoteDetailModal({ quote, onClose, onStatusChange }: ModalProps) {
+export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChange }: ModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('general')
   const [saving, setSaving] = useState(false)
 

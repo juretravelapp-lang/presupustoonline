@@ -125,7 +125,7 @@ export function WizardShell() {
   const {
     currentStep, currentStepIndex, direction,
     nextStep, prevStep, isSubmitting,
-    setSubmitting, setSubmitted, data, completedSteps,
+    setSubmitting, setSubmitted, data,
   } = useWizardStore()
   const { openModal }  = useUIStore()
   const stepRef        = useRef<StepHandle>(null)

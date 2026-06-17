@@ -10,8 +10,6 @@ import {
   ArrowRight,
   User,
   Calendar,
-  DollarSign,
-  AlertCircle,
   Trash2,
   Phone,
 } from 'lucide-react'
@@ -381,10 +379,9 @@ interface CardProps {
   nextMeeting?: CrmMeeting | null
 }
 
-function KanbanCard({ quote, priceText, index, onSelect, onMove, onDelete, isMobileView = false, nextMeeting }: CardProps) {
+function KanbanCard({ quote, priceText, index, onSelect, onMove, onDelete, nextMeeting }: CardProps) {
   const allDestinos = [...quote.destinos, ...(quote.destino_personalizado ? quote.destino_personalizado.split(',') : [])]
   const curIdx = COLUMNS.findIndex(c => c.id === quote.estado)
-  const isOperatorQuote = quote.origen_consulta === 'operador'
 
   // Use meeting from crm_meetings if available, fallback to legacy field
   const meetingDate = nextMeeting?.fecha_inicio || quote.reunion_fecha
