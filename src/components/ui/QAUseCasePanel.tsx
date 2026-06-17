@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useWizardStore } from '@/stores/wizardStore'
+import { useAuthStore } from '@/stores/authStore'
 import { motion, AnimatePresence } from 'motion/react'
 import { Beaker, Check, Play, RefreshCw, X } from 'lucide-react'
 import type { WizardData, WizardStep } from '@/types/wizard'
@@ -423,6 +424,48 @@ export function QAUseCasePanel() {
                   </div>
                 )
               })}
+            </div>
+
+            {/* Bypass controls for Log Dashboard */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14, marginTop: 4 }}>
+              <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Simular Acceso Dashboard</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                <button
+                  onClick={() => {
+                    // Navigate to /log if not there
+                    if (window.location.pathname !== '/log') {
+                      window.history.pushState({}, '', '/log')
+                      window.dispatchEvent(new PopStateEvent('popstate'))
+                    }
+                    useAuthStore.getState().bypassLogin('admin')
+                    setIsOpen(false)
+                  }}
+                  style={{
+                    padding: '6px 4px', background: 'rgba(52,211,153,0.1)',
+                    border: '1px solid rgba(52,211,153,0.25)', borderRadius: 8,
+                    fontSize: 10, fontWeight: 800, color: '#34D399', cursor: 'pointer',
+                  }}
+                >
+                  🔓 Modo Admin
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.location.pathname !== '/log') {
+                      window.history.pushState({}, '', '/log')
+                      window.dispatchEvent(new PopStateEvent('popstate'))
+                    }
+                    useAuthStore.getState().bypassLogin('operador')
+                    setIsOpen(false)
+                  }}
+                  style={{
+                    padding: '6px 4px', background: 'rgba(96,165,250,0.1)',
+                    border: '1px solid rgba(96,165,250,0.25)', borderRadius: 8,
+                    fontSize: 10, fontWeight: 800, color: '#60A5FA', cursor: 'pointer',
+                  }}
+                >
+                  🔓 Modo Operador
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

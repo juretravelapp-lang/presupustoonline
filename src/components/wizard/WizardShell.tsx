@@ -8,6 +8,7 @@ import { Step4Preferences } from './steps/Step4Preferences'
 import { Step5Contact } from './steps/Step5Contact'
 import { Step6Summary } from './steps/Step6Summary'
 import { useUIStore } from '@/stores/uiStore'
+import { useAuthStore } from '@/stores/authStore'
 import { insertQuote, type InsertQuote } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight, Send, Loader2 } from 'lucide-react'
@@ -169,6 +170,10 @@ export function WizardShell() {
         if (allRegresos.length) globalRegreso = allRegresos.sort().reverse()[0]
       }
 
+      // Read active session info for Operator Mode attribution
+      const authUser = useAuthStore.getState().user
+      const isOperatorMode = !!authUser
+
       const quoteData: InsertQuote = {
         nombre:                data.personal.nombre,
         apellido:              data.personal.apellido,
@@ -193,10 +198,12 @@ export function WizardShell() {
         comentarios:           data.comments.comentarios || null,
         tipo_viaje:            data.comments.tipo_viaje || null,
         ip_address:            null,
-        origen_consulta:       'web',
-        estado:                'nuevo',
+        origen_consulta:       isOperatorMode ? 'operador' : 'web',
+        estado:                'no_cotizado',
         whatsapp_enviado:      false,
         whatsapp_mensaje:      null,
+        creador_email:         isOperatorMode ? authUser.email : null,
+        operador_nombre:       isOperatorMode ? authUser.nombre : null,
       }
 
       console.log('%c✈️ COTIZACIÓN JURE TRAVEL', 'color:#F59E0B;font-weight:bold;font-size:14px;')

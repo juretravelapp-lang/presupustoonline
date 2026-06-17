@@ -15,6 +15,29 @@ export const supabase = createClient(
 // =============================================
 // Types for the travel_quotes table
 // =============================================
+export interface ProveedorPrecio {
+  nombre: string
+  hotel_costo: number
+  vuelos_costo: number
+  otros_costo: number
+  markup_aplicado: number
+  precio_final: number
+}
+
+export interface PricingDetalles {
+  moneda: 'ARS' | 'USD'
+  markup_tipo: 'porcentaje' | 'fijo'
+  markup_valor: number
+  proveedor_seleccionado: string | null
+  proveedores: ProveedorPrecio[]
+}
+
+export interface HistorialEstado {
+  estado: TravelQuoteRow['estado']
+  fecha: string
+  usuario: string
+}
+
 export interface TravelQuoteRow {
   id: string
   nombre: string
@@ -41,14 +64,22 @@ export interface TravelQuoteRow {
   tipo_viaje: string | null
   ip_address: string | null
   origen_consulta: string
-  estado: 'nuevo' | 'contactado' | 'cotizado' | 'reservado' | 'cancelado'
+  estado: 'no_cotizado' | 'en_cotizacion' | 'cotizado' | 'enviado_cliente' | 'concretado' | 'cancelado'
   whatsapp_enviado: boolean
   whatsapp_mensaje: string | null
+  creador_email?: string | null
+  operador_nombre?: string | null
+  reunion_fecha?: string | null
+  reunion_estado?: 'pendiente' | 'realizada' | 'cancelada' | null
+  notas_crm?: string | null
+  pricing_detalles?: PricingDetalles | null
+  historial?: HistorialEstado[] | null
   created_at: string
   updated_at: string
 }
 
 export type InsertQuote = Omit<TravelQuoteRow, 'id' | 'created_at' | 'updated_at'>
+
 
 // =============================================
 // CRUD Operations
@@ -76,6 +107,31 @@ export async function updateQuoteStatus(
 
   if (error) throw error
   return data as TravelQuoteRow
+}
+
+export async function updateQuoteDetails(
+  id: string,
+  updates: Partial<TravelQuoteRow>
+) {
+  const { data, error } = await supabase
+    .from('travel_quotes')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as TravelQuoteRow
+}
+
+export async function deleteQuote(id: string) {
+  const { error } = await supabase
+    .from('travel_quotes')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return true
 }
 
 export async function getQuotes(filters?: {
@@ -139,28 +195,143 @@ export async function markWhatsAppSent(id: string, message: string) {
 }
 
 export async function getDashboardStats() {
-  const { data, error } = await supabase.rpc('get_dashboard_stats')
+  // Direct count by current status names
+  const counts = await Promise.all([
+    supabase.from('travel_quotes').select('*', { count: 'exact', head: true }),
+    supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'no_cotizado'),
+    supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'en_cotizacion'),
+    supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'cotizado'),
+    supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'enviado_cliente'),
+    supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'concretado'),
+    supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'cancelado'),
+  ])
 
-  if (error) {
-    // Fallback: manual count
-    const counts = await Promise.all([
-      supabase.from('travel_quotes').select('*', { count: 'exact', head: true }),
-      supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'nuevo'),
-      supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'contactado'),
-      supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'cotizado'),
-      supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'reservado'),
-      supabase.from('travel_quotes').select('*', { count: 'exact', head: true }).eq('estado', 'cancelado'),
-    ])
+  // Count today's pending meetings
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayEnd = new Date()
+  todayEnd.setHours(23, 59, 59, 999)
 
-    return {
-      total: counts[0].count || 0,
-      nuevos: counts[1].count || 0,
-      contactados: counts[2].count || 0,
-      cotizados: counts[3].count || 0,
-      reservados: counts[4].count || 0,
-      cancelados: counts[5].count || 0,
-    }
+  const { count: reunionesHoy } = await supabase
+    .from('crm_meetings')
+    .select('*', { count: 'exact', head: true })
+    .gte('fecha_inicio', todayStart.toISOString())
+    .lte('fecha_inicio', todayEnd.toISOString())
+    .eq('estado', 'pendiente')
+
+  return {
+    total: counts[0].count || 0,
+    no_cotizado: counts[1].count || 0,
+    en_cotizacion: counts[2].count || 0,
+    cotizados: counts[3].count || 0,
+    enviado_cliente: counts[4].count || 0,
+    concretados: counts[5].count || 0,
+    cancelados: counts[6].count || 0,
+    reuniones_hoy: reunionesHoy || 0,
   }
+}
 
-  return data
+// =============================================
+// CRM Meetings CRUD
+// =============================================
+
+export interface CrmMeeting {
+  id: string
+  quote_id: string
+  titulo: string
+  fecha_inicio: string
+  fecha_fin: string | null
+  estado: 'pendiente' | 'realizada' | 'cancelada' | 'reprogramada'
+  tipo: 'presencial' | 'videollamada' | 'telefonica'
+  notas: string | null
+  creado_por: string | null
+  created_at: string
+  updated_at: string
+  // Joined fields from travel_quotes (when fetching with join)
+  travel_quotes?: {
+    nombre: string
+    apellido: string
+    email: string
+    celular: string
+    destino: string | null
+    destino_personalizado: string | null
+    destinos: string[]
+    estado: TravelQuoteRow['estado']
+  }
+}
+
+export type InsertMeeting = Omit<CrmMeeting, 'id' | 'created_at' | 'updated_at' | 'travel_quotes'>
+
+export async function getMeetingsByDateRange(from: string, to: string) {
+  const { data, error } = await supabase
+    .from('crm_meetings')
+    .select(`
+      *,
+      travel_quotes ( nombre, apellido, email, celular, destino, destino_personalizado, destinos, estado )
+    `)
+    .gte('fecha_inicio', from)
+    .lte('fecha_inicio', to)
+    .order('fecha_inicio', { ascending: true })
+
+  if (error) throw error
+  return data as CrmMeeting[]
+}
+
+export async function getMeetingsForQuote(quoteId: string) {
+  const { data, error } = await supabase
+    .from('crm_meetings')
+    .select('*')
+    .eq('quote_id', quoteId)
+    .order('fecha_inicio', { ascending: true })
+
+  if (error) throw error
+  return data as CrmMeeting[]
+}
+
+export async function createMeeting(meeting: InsertMeeting) {
+  const { data, error } = await supabase
+    .from('crm_meetings')
+    .insert(meeting)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as CrmMeeting
+}
+
+export async function updateMeeting(id: string, updates: Partial<CrmMeeting>) {
+  const { data, error } = await supabase
+    .from('crm_meetings')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as CrmMeeting
+}
+
+export async function deleteMeeting(id: string) {
+  const { error } = await supabase
+    .from('crm_meetings')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return true
+}
+
+export async function getNextMeetingForQuotes(quoteIds: string[]) {
+  if (quoteIds.length === 0) return []
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from('crm_meetings')
+    .select('*')
+    .in('quote_id', quoteIds)
+    .gte('fecha_inicio', now)
+    .eq('estado', 'pendiente')
+    .order('fecha_inicio', { ascending: true })
+
+  if (error) throw error
+  return data as CrmMeeting[]
 }
