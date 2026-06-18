@@ -9,11 +9,11 @@ import type { StepHandle } from '../WizardShell'
 import { motion } from 'motion/react'
 
 const schema = z.object({
-  nombre:       z.string().min(2, 'Mínimo 2 caracteres').max(50),
-  apellido:     z.string().min(2, 'Mínimo 2 caracteres').max(50),
-  dni:          z.string().min(7, 'Mínimo 7 dígitos').max(9).regex(/^\d+$/, 'Solo números'),
+  nombre:       z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
+  apellido:     z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
+  dni:          z.string().min(6, 'Mínimo 6 dígitos').max(15, 'Máximo 15 dígitos').regex(/^[\d\.\s\-]+$/, 'Solo números, puntos y guiones'),
   email:        z.string().email('Email inválido'),
-  celular:      z.string().min(10, 'Mínimo 10 dígitos').max(15).regex(/^[\d\s\-\+]+$/, 'Solo números'),
+  celular:      z.string().min(8, 'Mínimo 8 dígitos').max(30, 'Máximo 30 caracteres').regex(/^[\d\s\-\+]+$/, 'Solo números, guiones, espacios y +'),
   ciudad_salida: z.string().optional().default(''),
 })
 
