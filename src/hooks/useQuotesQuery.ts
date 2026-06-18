@@ -38,6 +38,15 @@ export function useDashboardStats(options?: { enabled?: boolean }) {
   })
 }
 
+export function useAdvancedAnalytics(dateRange?: { from: string; to: string }, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['advancedAnalytics', dateRange?.from, dateRange?.to],
+    queryFn: () => supabaseService.getAdvancedAnalytics(dateRange),
+    refetchInterval: 60000, // refresh every 60s
+    enabled: options?.enabled,
+  })
+}
+
 // ----------------------
 // MUTATIONS
 // ----------------------

@@ -234,6 +234,26 @@ export async function getDashboardStats() {
   }
 }
 
+export async function getAdvancedAnalytics(dateRange?: { from: string; to: string }) {
+  let query = supabase
+    .from('travel_quotes')
+    .select('id, destinos, mes_preferido, fecha_salida, estado, creador_email, operador_nombre, created_at, nombre, apellido, email, dni, celular')
+    .order('created_at', { ascending: false })
+    .limit(1000)
+
+  if (dateRange?.from) {
+    query = query.gte('created_at', dateRange.from)
+  }
+  if (dateRange?.to) {
+    query = query.lte('created_at', dateRange.to)
+  }
+
+  const { data, error } = await query
+
+  if (error) throw error
+  return data as Partial<TravelQuoteRow>[]
+}
+
 // =============================================
 // CRM Meetings CRUD
 // =============================================

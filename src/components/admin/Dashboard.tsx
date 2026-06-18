@@ -4,7 +4,10 @@ import { useWizardStore } from '@/stores/wizardStore'
 import { KanbanBoard } from './KanbanBoard'
 import { MeetingsBoard } from './MeetingsBoard'
 import { WizardShell } from '@/components/wizard/WizardShell'
-import { useDashboardStats } from '@/hooks/useQuotesQuery'
+import { useDashboardStats, useAdvancedAnalytics, useQuoteDetail } from '@/hooks/useQuotesQuery'
+import { AnalyticsCharts } from './metrics/AnalyticsCharts'
+import { LeadsDataTable } from './metrics/LeadsDataTable'
+import { QuoteDetailModal } from './QuoteDetailModal'
 import {
   LayoutDashboard,
   KanbanSquare,
@@ -31,9 +34,18 @@ export function Dashboard() {
   const [activeView, setActiveView] = useState<AdminView>('kanban')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  const [dateRange, setDateRange] = useState<{from: string; to: string} | undefined>(undefined)
+  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
+
   const { data: stats, isLoading: statsLoading } = useDashboardStats({
     enabled: activeView === 'metrics' && user?.role === 'admin'
   })
+
+  const { data: advancedData, isLoading: advancedLoading } = useAdvancedAnalytics(dateRange, {
+    enabled: activeView === 'metrics' && user?.role === 'admin'
+  })
+
+  const { data: selectedQuote } = useQuoteDetail(selectedQuoteId || '')
 
   const handleLogout = () => {
     logout()
@@ -230,7 +242,7 @@ export function Dashboard() {
             {/* Stats Cards Grid */}
             {statsLoading ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#94A3B8', fontSize: 14 }}>
-                <Loader2 className="animate-spin" size={18} /> Cargando datos...
+                <Loader2 className="animate-spin" size={18} /> Cargando datos generales...
               </div>
             ) : stats ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
@@ -248,12 +260,8 @@ export function Dashboard() {
                     key={stat.title}
                     className="glass-card animate-fade-in-up"
                     style={{
-                      padding: '24px 20px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 12,
-                      animationDelay: `${idx * 0.05}s`,
-                      borderLeft: `3px solid ${stat.color}`,
+                      padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 12,
+                      animationDelay: `${idx * 0.05}s`, borderLeft: `3px solid ${stat.color}`,
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -266,6 +274,53 @@ export function Dashboard() {
               </div>
             ) : (
               <p style={{ fontSize: 13, color: 'rgba(148,163,184,0.6)' }}>No se pudieron recuperar las métricas.</p>
+            )}
+
+            {/* Advanced Analytics Charts */}
+            <div style={{ marginTop: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#F0F4FF' }}>Inteligencia de Negocios</h3>
+                
+                {/* Date Filter */}
+                <select 
+                  className="input-dark" 
+                  style={{ width: 180, height: 38 }}
+                  onChange={e => {
+                    const val = e.target.value
+                    if (val === 'all') setDateRange(undefined)
+                    else if (val === '30d') {
+                      const d = new Date()
+                      d.setDate(d.getDate() - 30)
+                      setDateRange({ from: d.toISOString(), to: new Date().toISOString() })
+                    }
+                    else if (val === 'this_month') {
+                      const d = new Date()
+                      d.setDate(1) // first day of month
+                      setDateRange({ from: d.toISOString(), to: new Date().toISOString() })
+                    }
+                  }}
+                >
+                  <option value="all">Historico Completo</option>
+                  <option value="this_month">Este Mes</option>
+                  <option value="30d">Últimos 30 días</option>
+                </select>
+              </div>
+
+              <AnalyticsCharts data={advancedData || []} isLoading={advancedLoading} />
+              
+              <LeadsDataTable 
+                data={advancedData || []} 
+                onRowClick={(id) => setSelectedQuoteId(id)} 
+              />
+            </div>
+            
+            {/* Modal para ver detalle desde la tabla */}
+            {selectedQuoteId && selectedQuote && (
+              <QuoteDetailModal
+                quote={selectedQuote}
+                onClose={() => setSelectedQuoteId(null)}
+                onStatusChange={() => {}}
+              />
             )}
           </div>
         )}
