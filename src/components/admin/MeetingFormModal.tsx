@@ -325,6 +325,55 @@ export function MeetingFormModal({ meeting, preselectedQuoteId, preselectedQuote
             />
           </div>
 
+          {/* Calendar Link Generator */}
+          {fechaInicio && horaInicio && (
+            <div style={{ padding: 14, background: 'rgba(52,211,153,0.05)', border: '1.5px solid rgba(52,211,153,0.15)', borderRadius: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#34D399', marginBottom: 2 }}>📅 Invitación para el cliente</p>
+                <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.8)' }}>Generá un link para que el cliente lo agregue a su Google Calendar.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const fInit = fechaInicio.replace(/-/g, '')
+                  const hInit = horaInicio.replace(':', '') + '00'
+                  const start = `${fInit}T${hInit}`
+
+                  let end = start
+                  if (fechaFin && horaFin) {
+                    const fEnd = fechaFin.replace(/-/g, '')
+                    const hEnd = horaFin.replace(':', '') + '00'
+                    end = `${fEnd}T${hEnd}`
+                  } else {
+                    const d = new Date(`${fechaInicio}T${horaInicio}:00`)
+                    d.setHours(d.getHours() + 1)
+                    const yy = d.getFullYear()
+                    const mm = String(d.getMonth() + 1).padStart(2, '0')
+                    const dd = String(d.getDate()).padStart(2, '0')
+                    const hh = String(d.getHours()).padStart(2, '0')
+                    const min = String(d.getMinutes()).padStart(2, '0')
+                    end = `${yy}${mm}${dd}T${hh}${min}00`
+                  }
+
+                  const title = encodeURIComponent(titulo || 'Reunión Comercial')
+                  const details = encodeURIComponent(notas || 'Reunión agendada')
+                  
+                  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}`
+                  navigator.clipboard.writeText(url)
+                  alert('¡Link de Google Calendar copiado!\nPodés pegarlo en WhatsApp para enviárselo al cliente.')
+                }}
+                style={{
+                  padding: '8px 14px', borderRadius: 10, background: '#34D399', color: '#0A1526',
+                  fontSize: 12, fontWeight: 800, cursor: 'pointer', border: 'none', transition: 'all 0.15s', flexShrink: 0, marginLeft: 12
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#10B981')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#34D399')}
+              >
+                Copiar Link
+              </button>
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <p style={{ fontSize: 12, color: '#F87171', fontWeight: 700, textAlign: 'center', padding: '8px 12px', background: 'rgba(248,113,113,0.08)', borderRadius: 8, border: '1px solid rgba(248,113,113,0.18)' }}>
