@@ -10,17 +10,4 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return
-          // Group React and React DOM together
-          if (id.includes('react') || id.includes('react-dom')) return 'vendor.react'
-          // Keep a single vendor chunk for most deps to avoid circular dependencies
-          return 'vendor'
-        }
-      }
-    }
-  }
 })
