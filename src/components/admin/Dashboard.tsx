@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { useWizardStore } from '@/stores/wizardStore'
 import { KanbanBoard } from './KanbanBoard'
 import { MeetingsBoard } from './MeetingsBoard'
 import { WizardShell } from '@/components/wizard/WizardShell'
-import { getDashboardStats } from '@/lib/supabase'
+import { useDashboardStats } from '@/hooks/useQuotesQuery'
 import {
   LayoutDashboard,
   KanbanSquare,
@@ -30,21 +30,10 @@ export function Dashboard() {
   const resetWizard = useWizardStore(state => state.reset)
   const [activeView, setActiveView] = useState<AdminView>('kanban')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [stats, setStats] = useState<any>(null)
-  const [statsLoading, setStatsLoading] = useState(false)
 
-  // Fetch stats if view is 'metrics' and user is admin
-  useEffect(() => {
-    if (activeView === 'metrics' && user?.role === 'admin') {
-      setStatsLoading(true)
-      getDashboardStats()
-        .then(res => {
-          setStats(res)
-        })
-        .catch(err => console.error('Error loading stats:', err))
-        .finally(() => setStatsLoading(false))
-    }
-  }, [activeView, user])
+  const { data: stats, isLoading: statsLoading } = useDashboardStats({
+    enabled: activeView === 'metrics' && user?.role === 'admin'
+  })
 
   const handleLogout = () => {
     logout()

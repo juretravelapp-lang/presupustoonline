@@ -61,6 +61,20 @@ export function Step6Summary() {
 
   const fechaResumen = () => {
     if (data.dates.tipo_fecha === 'exacta') {
+      const hasDestDates = Object.keys(data.dates.fechas_por_destino || {}).length > 0
+      
+      if (hasDestDates) {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+            {Object.entries(data.dates.fechas_por_destino).map(([dest, d]: any) => (
+              <span key={dest} style={{ fontSize: 11 }}>
+                • <b>{dest.replace(/_/g, ' ')}</b>: {d.fecha_salida ? formatDate(d.fecha_salida) : '—'} al {d.fecha_regreso ? formatDate(d.fecha_regreso) : '—'}
+              </span>
+            ))}
+          </div>
+        )
+      }
+
       return `${data.dates.fecha_salida ? formatDate(data.dates.fecha_salida) : '—'} al ${data.dates.fecha_regreso ? formatDate(data.dates.fecha_regreso) : '—'}`
     }
     if (data.dates.tipo_fecha === 'flexible') {
@@ -161,9 +175,9 @@ export function Step6Summary() {
               style={{ paddingLeft: 12, paddingRight: 12 }}
               aria-label="Tipo de viaje"
             >
-              <option value="">Seleccioná el tipo de viaje</option>
+              <option value="" style={{ background: '#0A1526', color: '#F0F4FF' }}>Seleccioná el tipo de viaje</option>
               {TIPOS_VIAJE.map(t => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+                <option key={t.value} value={t.value} style={{ background: '#0A1526', color: '#F0F4FF' }}>{t.label}</option>
               ))}
             </select>
           </div>

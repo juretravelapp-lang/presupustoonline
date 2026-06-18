@@ -4,6 +4,7 @@ import { DESTINOS_POPULARES, MESES } from '@/lib/constants'
 import { CalendarDays, Calendar, Info } from 'lucide-react'
 import type { StepHandle } from '../WizardShell'
 import { motion, AnimatePresence } from 'motion/react'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const today = new Date().toISOString().split('T')[0]
@@ -135,13 +136,23 @@ export const Step2Dates = forwardRef<StepHandle>(function Step2Dates(_, ref) {
       {/* Mode selector */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         {([
-          { value: 'exacta',   label: 'Fecha exacta',  icon: CalendarDays, desc: 'Tengo fechas confirmadas' },
-          { value: 'flexible', label: 'Mes flexible',   icon: Calendar,     desc: 'Sé en qué mes viajo' },
+          { value: 'exacta',   label: 'Fecha exacta',  icon: CalendarDays, desc: 'Tengo fechas confirmadas', tooltip: null },
+          { value: 'flexible', label: 'Mes flexible',   icon: Calendar,     desc: 'Sé en qué mes viajo', tooltip: 'Ideal si buscás las mejores tarifas dentro de un mes completo.' },
         ] as const).map(opt => {
           const isActive = mode === opt.value
-          return (
+          
+          const ButtonContent = (
+            <div style={{ width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <opt.icon size={18} style={{ color: isActive ? '#F59E0B' : 'rgba(100,116,139,0.8)', flexShrink: 0 }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: isActive ? '#FBBF24' : '#F0F4FF' }}>{opt.label}</span>
+                {opt.tooltip && <Info size={14} style={{ color: 'rgba(100,116,139,0.8)' }} />}
+              </div>
+              <p style={{ fontSize: 12, color: isActive ? 'rgba(251,191,36,0.65)' : 'rgba(100,116,139,0.8)', fontWeight: 500 }}>{opt.desc}</p>
+            </div>
+          )
+          const Button = (
             <button
-              key={opt.value}
               type="button"
               onClick={() => { setMode(opt.value); setError('') }}
               aria-pressed={isActive}
@@ -153,14 +164,26 @@ export const Step2Dates = forwardRef<StepHandle>(function Step2Dates(_, ref) {
                 cursor: 'pointer', textAlign: 'left',
                 transition: 'all 0.18s',
                 boxShadow: isActive ? '0 0 24px rgba(245,158,11,0.1)' : 'none',
+                width: '100%',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <opt.icon size={18} style={{ color: isActive ? '#F59E0B' : 'rgba(100,116,139,0.8)', flexShrink: 0 }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: isActive ? '#FBBF24' : '#F0F4FF' }}>{opt.label}</span>
-              </div>
-              <p style={{ fontSize: 12, color: isActive ? 'rgba(251,191,36,0.65)' : 'rgba(100,116,139,0.8)', fontWeight: 500 }}>{opt.desc}</p>
+              {ButtonContent}
             </button>
+          )
+
+          return opt.tooltip ? (
+            <Tooltip key={opt.value}>
+              <TooltipTrigger asChild>
+                {Button}
+              </TooltipTrigger>
+              <TooltipContent>
+                {opt.tooltip}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <div key={opt.value}>
+              {Button}
+            </div>
           )
         })}
       </div>

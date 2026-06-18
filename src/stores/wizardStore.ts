@@ -11,6 +11,7 @@ interface WizardState {
   data:             WizardData
   isSubmitting:     boolean
   isSubmitted:      boolean
+  hasRestoredDraft: boolean
 
   nextStep:          () => void
   prevStep:          () => void
@@ -19,6 +20,7 @@ interface WizardState {
   updateData:        <K extends keyof WizardData>(step: K, data: Partial<WizardData[K]>) => void
   setSubmitting:     (value: boolean) => void
   setSubmitted:      (value: boolean) => void
+  setHasRestoredDraft: (value: boolean) => void
   reset:             () => void
 }
 
@@ -55,6 +57,7 @@ export const useWizardStore = create<WizardState>()(
       data:             initialData,
       isSubmitting:     false,
       isSubmitted:      false,
+      hasRestoredDraft: false,
 
       nextStep: () => {
         const { currentStepIndex } = get()
@@ -92,6 +95,7 @@ export const useWizardStore = create<WizardState>()(
 
       setSubmitting: (value) => set({ isSubmitting: value }),
       setSubmitted:  (value) => set({ isSubmitted: value }),
+      setHasRestoredDraft: (value) => set({ hasRestoredDraft: value }),
 
       reset: () => set({
         currentStep:      'destination',
@@ -101,6 +105,7 @@ export const useWizardStore = create<WizardState>()(
         data:             initialData,
         isSubmitting:     false,
         isSubmitted:      false,
+        hasRestoredDraft: false,
       }),
     }),
     {
@@ -111,6 +116,12 @@ export const useWizardStore = create<WizardState>()(
         currentStepIndex: state.currentStepIndex,
         completedSteps:   state.completedSteps,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state && state.completedSteps.length > 0) {
+          state.setHasRestoredDraft(true)
+          setTimeout(() => state.setHasRestoredDraft(false), 5000)
+        }
+      }
     }
   )
 )

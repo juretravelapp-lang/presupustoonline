@@ -3,7 +3,8 @@ import { updateQuoteDetails, getMeetingsForQuote, deleteMeeting, type TravelQuot
 import { MeetingFormModal } from './MeetingFormModal'
 import { X, Calendar, DollarSign, FileText, CheckCircle, Printer, Save, Clock, Plus, Trash2, MapPin, Video, Phone, Loader2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-
+import { PDFDownloadLink } from '@react-pdf/renderer'
+import { QuotePDF } from './QuotePDF'
 interface ModalProps {
   quote: TravelQuoteRow
   onClose: () => void
@@ -164,134 +165,9 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
     }
   }
 
-  /* ── Generate printable PDF window ──────────────────────────── */
-  const printPdf = () => {
-    const selectedProvider = pricing.proveedores.find(p => p.nombre === pricing.proveedor_seleccionado)
-    if (!selectedProvider) {
-      alert('Seleccioná un proveedor de la calculadora primero para marcarlo como ganador antes de exportar el PDF.')
-      return
-    }
+  /* ── Get Winning Provider helper ──────────────────────────── */
+  const selectedProvider = pricing.proveedores.find(p => p.nombre === pricing.proveedor_seleccionado)
 
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) return
-
-    const symbol = pricing.moneda === 'USD' ? 'USD $' : 'ARS $'
-    const destinationsText = [...quote.destinos, ...(quote.destino_personalizado ? quote.destino_personalizado.split(',') : [])]
-      .map(d => d.trim().replace(/_/g, ' '))
-      .join(', ')
-
-    const preferencesText = quote.preferencias.map(p => p.toUpperCase().replace(/_/g, ' ')).join(' | ')
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Presupuesto Jure Travel - ${quote.nombre} ${quote.apellido}</title>
-        <style>
-          body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1E293B; margin: 40px; line-height: 1.5; }
-          .header { border-bottom: 2px solid #F59E0B; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-          .logo { font-size: 24px; font-weight: 800; color: #0F1E35; }
-          .logo span { color: #F59E0B; }
-          .subtitle { font-size: 11px; text-transform: uppercase; color: #64748B; letter-spacing: 1px; }
-          .section { margin-bottom: 25px; }
-          .section-title { font-size: 14px; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px; margin-bottom: 12px; color: #0F1E35; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-          .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #F1F5F9; font-size: 13px; }
-          .row span:first-child { color: #64748B; font-weight: 600; }
-          .row span:last-child { font-weight: 700; color: #0F1E35; }
-          .price-box { background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 20px; text-align: center; margin-top: 30px; }
-          .price-title { font-size: 12px; text-transform: uppercase; color: #64748B; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 6px; }
-          .price-val { font-size: 32px; font-weight: 900; color: #D97706; }
-          .footer { margin-top: 50px; text-align: center; font-size: 11px; color: #94A3B8; border-top: 1px solid #E2E8F0; padding-top: 15px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div>
-            <div class="logo">Jure <span>Travel</span></div>
-            <div class="subtitle">Presupuesto a medida</div>
-          </div>
-          <div style="text-align: right; font-size: 12px; color: #64748B;">
-            Fecha: ${new Date().toLocaleDateString()}<br>
-            Nº Referencia: #${quote.id.substring(0, 8).toUpperCase()}
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Datos del Viajero</div>
-          <div class="grid">
-            <div>
-              <div class="row"><span>Nombre Completo</span><span>${quote.nombre} ${quote.apellido}</span></div>
-              <div class="row"><span>Documento DNI</span><span>${quote.dni}</span></div>
-            </div>
-            <div>
-              <div class="row"><span>Correo Electrónico</span><span>${quote.email}</span></div>
-              <div class="row"><span>Celular de Contacto</span><span>${quote.celular}</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Planificación de Viaje</div>
-          <div class="grid">
-            <div>
-              <div class="row"><span>Salida</span><span>${quote.ciudad_salida?.toUpperCase().replace(/_/g, ' ') || 'No especificada'}</span></div>
-              <div class="row"><span>Destino(s)</span><span>${destinationsText}</span></div>
-            </div>
-            <div>
-              <div class="row"><span>Tipo de Fechas</span><span>${quote.tipo_fecha === 'exacta' ? 'Exactas' : 'Flexible'}</span></div>
-              <div class="row">
-                <span>Fechas Estimadas</span>
-                <span>
-                  ${quote.tipo_fecha === 'exacta' 
-                    ? `${quote.fecha_salida ? formatDate(quote.fecha_salida) : '—'} al ${quote.fecha_regreso ? formatDate(quote.fecha_regreso) : '—'}`
-                    : quote.mes_preferido || '—'
-                  }
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="row" style="margin-top: 10px;">
-            <span>Pasajeros</span>
-            <span>🧑 ${quote.adultos} Adultos | 👧 ${quote.ninos_2_12} Niños | 👶 ${quote.bebes_0_2} Bebés</span>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Servicios Incluidos</div>
-          <p style="font-size: 12px; color: #0F1E35; font-weight: 700; margin: 0; padding: 6px 0;">${preferencesText}</p>
-        </div>
-
-        ${quote.comentarios ? `
-        <div class="section">
-          <div class="section-title">Observaciones del Cliente</div>
-          <p style="font-size: 12px; color: #475569; margin: 0; background: #F8FAFC; padding: 12px; border-radius: 8px; border: 1px solid #F1F5F9;">${quote.comentarios}</p>
-        </div>
-        ` : ''}
-
-        <div class="price-box">
-          <div class="price-title">Importe Final Presupuestado</div>
-          <div class="price-val">${symbol}${selectedProvider.precio_final.toLocaleString()}</div>
-          <p style="font-size: 11px; color: #64748B; margin-top: 6px; font-weight: 500;">Precios vigentes al día de la fecha. Sujeto a disponibilidad.</p>
-        </div>
-
-        <div class="footer">
-          Jure Travel - Legajo Nº 12345 · San Miguel de Tucumán · Correo: contacto@juretravel.com<br>
-          ¡Gracias por confiar tu próximo viaje en nosotros!
-        </div>
-
-        <script>
-          window.onload = function() {
-            window.print();
-          }
-        </script>
-      </body>
-      </html>
-    `
-
-    printWindow.document.write(htmlContent)
-    printWindow.document.close()
-  }
 
   return (
     <div style={{
@@ -315,9 +191,26 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
             <span style={{ fontSize: 10, fontWeight: 800, color: '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Lead CRM
             </span>
-            <h3 style={{ fontSize: 18, fontWeight: 800, color: '#F0F4FF', marginTop: 2 }}>
-              {quote.nombre} {quote.apellido}
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: '#F0F4FF', marginTop: 2 }}>
+                {quote.nombre} {quote.apellido}
+              </h3>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/quote/${quote.id}`;
+                  navigator.clipboard.writeText(url);
+                  alert('¡Link copiado al portapapeles!');
+                }}
+                style={{
+                  padding: '4px 8px', fontSize: 10, fontWeight: 700, borderRadius: 6,
+                  background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)',
+                  cursor: 'pointer', transition: 'all 0.15s'
+                }}
+                title="Copiar link para el cliente"
+              >
+                Copiar Link
+              </button>
+            </div>
           </div>
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
             <X size={16} />
@@ -736,14 +629,30 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
                   Guardar Planilla Costos
                 </button>
 
-                <button
-                  onClick={printPdf}
-                  className="btn-cta"
-                  style={{ height: 44, padding: '0 20px', fontSize: 13 }}
-                >
-                  <Printer size={16} />
-                  Exportar PDF Cliente
-                </button>
+                {selectedProvider ? (
+                  <PDFDownloadLink
+                    document={<QuotePDF quote={quote} selectedProvider={selectedProvider} />}
+                    fileName={`Presupuesto_Jure_Travel_${quote.nombre}_${quote.apellido}.pdf`}
+                    className="btn-cta"
+                    style={{ height: 44, padding: '0 20px', fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    {({ loading }) => (
+                      <>
+                        <Printer size={16} />
+                        {loading ? 'Generando PDF...' : 'Exportar PDF Cliente'}
+                      </>
+                    )}
+                  </PDFDownloadLink>
+                ) : (
+                  <button
+                    onClick={() => alert('Seleccioná un proveedor ganador primero para exportar el PDF.')}
+                    className="btn-cta"
+                    style={{ height: 44, padding: '0 20px', fontSize: 13, opacity: 0.5, cursor: 'not-allowed' }}
+                  >
+                    <Printer size={16} />
+                    Exportar PDF Cliente
+                  </button>
+                )}
               </div>
             </div>
           )}

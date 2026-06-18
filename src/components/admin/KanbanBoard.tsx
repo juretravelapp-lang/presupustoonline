@@ -1,8 +1,15 @@
-import { useState, useEffect, useCallback } from 'react'
-import { getQuotes, updateQuoteStatus, deleteQuote, getNextMeetingForQuotes, type TravelQuoteRow, type HistorialEstado, type CrmMeeting } from '@/lib/supabase'
+import { useState } from 'react'
+import { type TravelQuoteRow, type HistorialEstado, type CrmMeeting } from '@/lib/supabase'
+import { useQuotesList, useUpdateQuoteStatus, useDeleteQuote } from '@/hooks/useQuotesQuery'
 import { useAuthStore } from '@/stores/authStore'
 import { QuoteDetailModal } from './QuoteDetailModal'
 import { motion, AnimatePresence } from 'motion/react'
+import {
+  DndContext, DragOverlay, closestCorners,
+  KeyboardSensor, PointerSensor, useSensor, useSensors, type DragStartEvent, type DragEndEvent
+} from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
   Search,
   RefreshCw,
@@ -25,8 +32,6 @@ const COLUMNS: { id: TravelQuoteRow['estado']; label: string; emoji: string; col
 
 export function KanbanBoard() {
   const { user } = useAuthStore()
-  const [quotes, setQuotes] = useState<TravelQuoteRow[]>([])
-  const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedQuote, setSelectedQuote] = useState<TravelQuoteRow | null>(null)
   
@@ -34,66 +39,70 @@ export function KanbanBoard() {
   const [activeMobileCol, setActiveMobileCol] = useState<TravelQuoteRow['estado']>('no_cotizado')
 
   /* ── Fetch data ─────────────────────────────────────────────── */
-  const [nextMeetings, setNextMeetings] = useState<Record<string, CrmMeeting>>({})
+  const { data: quotesData, isLoading, refetch } = useQuotesList({ limit: 100 })
+  const quotes = quotesData?.data || []
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const { data } = await getQuotes({ limit: 100 })
-      setQuotes(data || [])
-      // Fetch next pending meetings for all quotes
-      if (data && data.length > 0) {
-        try {
-          const ids = data.map(q => q.id)
-          const meetingsData = await getNextMeetingForQuotes(ids)
-          const map: Record<string, CrmMeeting> = {}
-          meetingsData.forEach(m => {
-            // Keep only the earliest for each quote
-            if (!map[m.quote_id]) map[m.quote_id] = m
-          })
-          setNextMeetings(map)
-        } catch { /* ignore meetings error */ }
-      }
-    } catch (err) {
-      console.error('Error fetching quotes:', err)
-    } finally {
-      setLoading(false)
+  const updateStatusMutation = useUpdateQuoteStatus()
+  const deleteQuoteMutation = useDeleteQuote()
+
+  /* ── Drag & Drop State ────────────────────────────────────────── */
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
+  const activeDragQuote = activeDragId ? quotes.find(q => q.id === activeDragId) : null
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  )
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string)
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDragId(null)
+    const { active, over } = event
+    if (!over) return
+
+    const activeQuoteId = active.id as string
+    const overId = over.id as string
+
+    // Find the quote
+    const quote = quotes.find(q => q.id === activeQuoteId)
+    if (!quote) return
+
+    // If dropped over a column id
+    const targetStatus = COLUMNS.find(c => c.id === overId)?.id
+    // If dropped over another item, its sortable data might contain the status
+    // Actually we will set the column id as the droppable id.
+    
+    // In Kanban, we'll let SortableContext items also act as droppable targets. 
+    // If we drop on an item, we look up its status
+    let newStatus: TravelQuoteRow['estado'] | undefined = targetStatus
+    if (!newStatus) {
+      const overQuote = quotes.find(q => q.id === overId)
+      if (overQuote) newStatus = overQuote.estado
     }
-  }, [])
 
-  useEffect(() => {
-    loadData()
-  }, [loadData])
+    if (newStatus && newStatus !== quote.estado) {
+      moveCard(quote, newStatus)
+    }
+  }
 
   /* ── Move Quote ─────────────────────────────────────────────── */
   const moveCard = async (quote: TravelQuoteRow, newStatus: TravelQuoteRow['estado']) => {
-    const oldStatus = quote.estado
-    // Update local state immediately for snappy response
-    setQuotes(prev =>
-      prev.map(q => (q.id === quote.id ? { ...q, estado: newStatus } : q))
-    )
-
     try {
-      // Create history record
+      await updateStatusMutation.mutateAsync({ id: quote.id, status: newStatus })
+      // Note: if you want to save history as well, you can still call updateQuoteDetails
+      const { updateQuoteDetails } = await import('@/lib/supabase')
       const historyRecord: HistorialEstado = {
         estado: newStatus,
         fecha: new Date().toISOString(),
         usuario: user?.email || 'Agente',
       }
-      const existingHistory = quote.historial || []
-      const newHistory = [...existingHistory, historyRecord]
-
-      await updateQuoteStatus(quote.id, newStatus)
-      // Save full details including history
-      // Note: we can import and update quote details directly in Supabase
-      const { updateQuoteDetails } = await import('@/lib/supabase')
+      const newHistory = [...(quote.historial || []), historyRecord]
       await updateQuoteDetails(quote.id, { historial: newHistory })
     } catch (err) {
       console.error('Failed to move quote:', err)
-      // Rollback on failure
-      setQuotes(prev =>
-        prev.map(q => (q.id === quote.id ? { ...q, estado: oldStatus } : q))
-      )
       alert('Error al mover cotización')
     }
   }
@@ -103,8 +112,7 @@ export function KanbanBoard() {
     if (!window.confirm('¿Estás seguro de eliminar esta solicitud permanentemente?')) return
 
     try {
-      await deleteQuote(id)
-      setQuotes(prev => prev.filter(q => q.id !== id))
+      await deleteQuoteMutation.mutateAsync(id)
     } catch (err) {
       console.error(err)
       alert('Error al eliminar')
@@ -180,8 +188,8 @@ export function KanbanBoard() {
             />
           </div>
           <button
-            onClick={loadData}
-            disabled={loading}
+            onClick={() => refetch()}
+            disabled={isLoading}
             style={{
               width: 44, height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.08)',
               background: 'rgba(255,255,255,0.03)', color: '#F0F4FF',
@@ -192,7 +200,7 @@ export function KanbanBoard() {
             onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
             title="Refrescar datos"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
@@ -235,81 +243,68 @@ export function KanbanBoard() {
       </div>
 
       {/* ── Columns Layout ───────────────────────────────────────── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(6, 1fr)',
-          gap: 16,
-          alignItems: 'flex-start',
-        }}
-        className="hidden sm:grid"
-      >
-        {COLUMNS.map(col => {
-          const colQuotes = filtered.filter(q => q.estado === col.id)
-          const totals = getColumnTotals(col.id)
-          return (
-            <div
-              key={col.id}
-              style={{
-                background: 'rgba(15,30,53,0.4)',
-                border: '1.5px solid rgba(255,255,255,0.05)',
-                borderRadius: 16,
-                padding: 12,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-                minHeight: '60vh',
-              }}
-            >
-              {/* Column header */}
-              <div style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <span style={{ fontSize: 16 }}>{col.emoji}</span>
-                  <h3 style={{ fontSize: 13, fontWeight: 800, color: col.color }}>{col.label}</h3>
-                  <span style={{
-                    marginLeft: 'auto',
-                    background: 'rgba(255,255,255,0.06)',
-                    padding: '2px 7px',
-                    borderRadius: 99,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: 'rgba(148,163,184,0.8)',
-                  }}>{colQuotes.length}</span>
-                </div>
-                {/* Aggregated Totals per column */}
-                <div style={{ display: 'flex', flexDirection: 'column', fontSize: 10, color: 'rgba(148,163,184,0.6)', fontWeight: 600, marginTop: 4 }}>
-                  {totals.usd > 0 && <span style={{ color: '#FBBF24' }}>USD: ${totals.usd.toLocaleString()}</span>}
-                  {totals.ars > 0 && <span style={{ color: '#60A5FA' }}>ARS: ${totals.ars.toLocaleString()}</span>}
-                  {totals.usd === 0 && totals.ars === 0 && <span>$0.00</span>}
-                </div>
-              </div>
-
-              {/* Cards List */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '55vh', overflowY: 'auto', paddingRight: 2 }}>
-                <AnimatePresence>
-                  {colQuotes.map((q, idx) => (
-                    <KanbanCard
-                      key={q.id}
-                      quote={q}
-                      priceText={getQuotePriceText(q)}
-                      index={idx}
-                      onSelect={() => setSelectedQuote(q)}
-                      onMove={moveCard}
-                      onDelete={handleDelete}
-                      nextMeeting={nextMeetings[q.id] || null}
-                    />
-                  ))}
-                  {colQuotes.length === 0 && (
-                    <div style={{ padding: '24px 0', textAlign: 'center', color: 'rgba(100,116,139,0.5)', fontSize: 11, border: '1px dashed rgba(255,255,255,0.04)', borderRadius: 12 }}>
-                      Vacío
+      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(6, 1fr)',
+            gap: 16,
+            alignItems: 'flex-start',
+          }}
+          className="hidden sm:grid"
+        >
+          {COLUMNS.map(col => {
+            const colQuotes = filtered.filter(q => q.estado === col.id)
+            const totals = getColumnTotals(col.id)
+            return (
+              <DroppableColumn key={col.id} col={col} totals={totals} colQuotes={colQuotes} isLoading={isLoading}>
+                {isLoading ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ height: 100, background: 'rgba(255,255,255,0.03)', borderRadius: 14, animation: 'pulse 1.5s infinite' }} />
+                    <div style={{ height: 100, background: 'rgba(255,255,255,0.03)', borderRadius: 14, animation: 'pulse 1.5s infinite' }} />
+                  </div>
+                ) : (
+                  <SortableContext items={colQuotes.map(q => q.id)} strategy={verticalListSortingStrategy}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minHeight: 100 }}>
+                      <AnimatePresence>
+                        {colQuotes.map((q, idx) => (
+                            <SortableKanbanCard
+                              key={q.id}
+                              quote={q}
+                              priceText={getQuotePriceText(q)}
+                              index={idx}
+                              onSelect={() => setSelectedQuote(q)}
+                              onMove={moveCard}
+                              onDelete={handleDelete}
+                            />
+                        ))}
+                      </AnimatePresence>
+                      {colQuotes.length === 0 && (
+                        <div style={{ padding: '24px 0', textAlign: 'center', color: 'rgba(100,116,139,0.5)', fontSize: 11, border: '1px dashed rgba(255,255,255,0.04)', borderRadius: 12 }}>
+                          Arrastrá aquí
+                        </div>
+                      )}
                     </div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+                  </SortableContext>
+                )}
+              </DroppableColumn>
+            )
+          })}
+        </div>
+
+        <DragOverlay>
+          {activeDragQuote ? (
+            <KanbanCard
+              quote={activeDragQuote}
+              priceText={getQuotePriceText(activeDragQuote)}
+              index={0}
+              onSelect={() => {}}
+              onMove={() => {}}
+              onDelete={() => {}}
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* ── Mobile Vertical View (sm:hidden) ─────────────────────── */}
       <div className="flex sm:hidden flex-col gap-10">
@@ -330,23 +325,31 @@ export function KanbanBoard() {
 
               {/* Mobile Cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {colQuotes.map((q, idx) => (
-                  <KanbanCard
-                    key={q.id}
-                    quote={q}
-                    priceText={getQuotePriceText(q)}
-                    index={idx}
-                    onSelect={() => setSelectedQuote(q)}
-                    onMove={moveCard}
-                    onDelete={handleDelete}
-                    isMobileView
-                    nextMeeting={nextMeetings[q.id] || null}
-                  />
-                ))}
-                {colQuotes.length === 0 && (
-                  <div style={{ padding: '40px 16px', textAlign: 'center', color: 'rgba(100,116,139,0.5)', fontSize: 13 }}>
-                    No hay solicitudes en esta columna.
-                  </div>
+                {isLoading ? (
+                  <>
+                    <div style={{ height: 120, background: 'rgba(255,255,255,0.03)', borderRadius: 14, animation: 'pulse 1.5s infinite' }} />
+                    <div style={{ height: 120, background: 'rgba(255,255,255,0.03)', borderRadius: 14, animation: 'pulse 1.5s infinite' }} />
+                  </>
+                ) : (
+                  <>
+                    {colQuotes.map((q, idx) => (
+                      <KanbanCard
+                        key={q.id}
+                        quote={q}
+                        priceText={getQuotePriceText(q)}
+                        index={idx}
+                        onSelect={() => setSelectedQuote(q)}
+                        onMove={moveCard}
+                        onDelete={handleDelete}
+                        isMobileView
+                      />
+                    ))}
+                    {colQuotes.length === 0 && (
+                      <div style={{ padding: '40px 16px', textAlign: 'center', color: 'rgba(100,116,139,0.5)', fontSize: 13 }}>
+                        No hay solicitudes en esta columna.
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -358,7 +361,7 @@ export function KanbanBoard() {
       {selectedQuote && (
         <QuoteDetailModal
           quote={selectedQuote}
-          onClose={() => { setSelectedQuote(null); loadData() }}
+          onClose={() => { setSelectedQuote(null); refetch() }}
           onStatusChange={(newStatus) => moveCard(selectedQuote, newStatus)}
         />
       )}
@@ -522,5 +525,79 @@ function KanbanCard({ quote, priceText, index, onSelect, onMove, onDelete, nextM
         </button>
       </div>
     </motion.div>
+  )
+}
+
+/* ─── Drag & Drop Wrapper Components ─────────────────────────────── */
+
+import { useDroppable } from '@dnd-kit/core'
+
+function DroppableColumn({ col, totals, colQuotes, children }: any) {
+  const { setNodeRef } = useDroppable({ id: col.id })
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        background: 'rgba(15,30,53,0.4)',
+        border: '1.5px solid rgba(255,255,255,0.05)',
+        borderRadius: 16,
+        padding: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        minHeight: '60vh',
+      }}
+    >
+      {/* Column header */}
+      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <span style={{ fontSize: 16 }}>{col.emoji}</span>
+          <h3 style={{ fontSize: 13, fontWeight: 800, color: col.color }}>{col.label}</h3>
+          <span style={{
+            marginLeft: 'auto',
+            background: 'rgba(255,255,255,0.06)',
+            padding: '2px 7px',
+            borderRadius: 99,
+            fontSize: 10,
+            fontWeight: 700,
+            color: 'rgba(148,163,184,0.8)',
+          }}>{colQuotes.length}</span>
+        </div>
+        {/* Aggregated Totals per column */}
+        <div style={{ display: 'flex', flexDirection: 'column', fontSize: 10, color: 'rgba(148,163,184,0.6)', fontWeight: 600, marginTop: 4 }}>
+          {totals.usd > 0 && <span style={{ color: '#FBBF24' }}>USD: ${totals.usd.toLocaleString()}</span>}
+          {totals.ars > 0 && <span style={{ color: '#60A5FA' }}>ARS: ${totals.ars.toLocaleString()}</span>}
+          {totals.usd === 0 && totals.ars === 0 && <span>$0.00</span>}
+        </div>
+      </div>
+      
+      {/* Cards List (children) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '55vh', overflowY: 'auto', paddingRight: 2 }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function SortableKanbanCard(props: CardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: props.quote.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <KanbanCard {...props} />
+    </div>
   )
 }

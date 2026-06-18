@@ -125,7 +125,7 @@ export function WizardShell() {
   const {
     currentStep, currentStepIndex, direction,
     nextStep, prevStep, isSubmitting,
-    setSubmitting, setSubmitted, data,
+    setSubmitting, setSubmitted, data, hasRestoredDraft
   } = useWizardStore()
   const { openModal }  = useUIStore()
   const stepRef        = useRef<StepHandle>(null)
@@ -154,9 +154,11 @@ export function WizardShell() {
   const handleSubmit = useCallback(async () => {
     setSubmitting(true)
     try {
+      const destinosSeleccionados = data.destination.destinos_seleccionados || []
+      const destinosCustom = data.destination.destinos_custom || []
       const allDestinos = [
-        ...data.destination.destinos_seleccionados,
-        ...data.destination.destinos_custom,
+        ...destinosSeleccionados,
+        ...destinosCustom,
       ]
       const destinosText = allDestinos.map(d => d.replace(/_/g, ' ')).join(', ')
 
@@ -183,7 +185,7 @@ export function WizardShell() {
         ciudad_salida:         data.origin.ciudad_salida?.replace(/_/g, ' ') || null,
         aeropuerto_salida:     data.origin.aeropuerto_salida || null,
         destino:               destinosText || null,
-        destino_personalizado: data.destination.destinos_custom.join(', ') || null,
+        destino_personalizado: destinosCustom.length > 0 ? destinosCustom.join(', ') : (data.destination.destino_personalizado || null),
         destinos:              allDestinos,
         tipo_fecha:            data.dates.tipo_fecha === 'exacta' ? 'exacta' : 'flexible',
         fecha_salida:          globalSalida  || null,
@@ -254,6 +256,64 @@ export function WizardShell() {
   return (
     <div className="min-h-screen pb-36 sm:pb-24" style={{ background: 'transparent' }}>
       <a href="#wizard-content" className="skip-link">Saltar al formulario</a>
+
+      {/* Auto-Save Toast */}
+      <AnimatePresence>
+        {hasRestoredDraft && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 16, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: '50%',
+              zIndex: 9999,
+              background: 'rgba(245, 158, 11, 0.95)',
+              color: '#fff',
+              padding: '12px 24px',
+              borderRadius: '999px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 600,
+              fontSize: '14px',
+              boxShadow: '0 10px 25px -5px rgba(245, 158, 11, 0.4)',
+              backdropFilter: 'blur(8px)'
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Hemos recuperado tu progreso
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Submit Loading Overlay */}
+      <AnimatePresence>
+        {isSubmitting && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 99999,
+              background: 'rgba(10,21,38,0.9)', backdropFilter: 'blur(10px)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+            }}
+          >
+            <Loader2 className="animate-spin text-amber-500 mb-4" size={56} />
+            <h3 style={{ fontSize: 22, fontWeight: 800, color: '#F0F4FF', marginBottom: 8 }}>
+              Estamos tomando tu pedido...
+            </h3>
+            <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.9)', fontWeight: 500 }}>
+              Preparando los detalles para nuestros asesores
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ════════════════════════════════════════════════════
           DESKTOP – step indicator bar
