@@ -9,19 +9,20 @@ interface StepWrapperProps {
 
 const stepVariants = {
   enter: (direction: number) => ({
-    x: direction > 0 ? 24 : -24,
+    x: direction > 0 ? 80 : -80,
     opacity: 0,
-    filter: 'blur(3px)',
+    scale: 0.97,
   }),
   center: {
     x: 0,
     opacity: 1,
-    filter: 'blur(0px)',
+    scale: 1,
   },
   exit: (direction: number) => ({
-    x: direction > 0 ? -24 : 24,
+    x: direction > 0 ? -80 : 80,
     opacity: 0,
-    filter: 'blur(3px)',
+    scale: 0.97,
+    filter: 'blur(4px)',
   }),
 }
 
@@ -37,11 +38,9 @@ export function StepWrapper({ stepKey, direction, children }: StepWrapperProps) 
         exit="exit"
         transition={{
           type: 'spring',
-          stiffness: 450,
-          damping: 32,
+          stiffness: 300,
+          damping: 30,
           mass: 0.8,
-          opacity: { duration: 0.15 },
-          filter: { duration: 0.12 },
         }}
       >
         {children}

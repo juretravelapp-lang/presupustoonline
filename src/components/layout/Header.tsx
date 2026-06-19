@@ -35,7 +35,7 @@ export function Header() {
             <h1 style={{ fontSize: 15, fontWeight: 800, color: '#F0F4FF', letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'var(--font-display)' }}>
               Jure Travel
             </h1>
-            <p style={{ fontSize: 10, color: 'rgba(245,158,11,0.8)', fontWeight: 600, marginTop: 1 }}>
+            <p style={{ fontSize: 10, color: 'rgba(201,169,110,0.8)', fontWeight: 600, marginTop: 1 }}>
               Presupuesto personalizado
             </p>
           </div>
@@ -49,19 +49,19 @@ export function Header() {
           style={{
             fontSize: 13,
             fontWeight: 700,
-            color: '#F59E0B',
+            color: '#C9A96E',
             textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
             gap: 6,
             padding: '6px 14px',
-            background: 'rgba(245,158,11,0.1)',
-            border: '1px solid rgba(245,158,11,0.25)',
+            background: 'rgba(201,169,110,0.1)',
+            border: '1px solid rgba(201,169,110,0.25)',
             borderRadius: 999,
             transition: 'all 0.2s',
           }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.18)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.1)')}
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,169,110,0.18)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(201,169,110,0.1)')}
           title="Contactar por WhatsApp"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">

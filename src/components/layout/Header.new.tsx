@@ -21,7 +21,7 @@ export function Header() {
           href="https://wa.me/5493812061066"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+          className="text-xs font-semibold text-gold hover:text-gold-hover transition-colors"
         >
           ¿Ayuda?
         </a>

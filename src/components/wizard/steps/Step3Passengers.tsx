@@ -26,7 +26,7 @@ function Counter({ label, emoji, ageRange, badge, badgeColor, value, min, max, o
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '16px 18px',
+        padding: '20px 24px',
         background: 'rgba(255,255,255,0.04)',
         border: '1.5px solid rgba(255,255,255,0.08)',
         borderRadius: 16,
@@ -35,19 +35,19 @@ function Counter({ label, emoji, ageRange, badge, badgeColor, value, min, max, o
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         {/* Icon bubble */}
         <div style={{
-          width: 48, height: 48,
-          borderRadius: 14,
-          background: 'rgba(245,158,11,0.1)',
-          border: '1.5px solid rgba(245,158,11,0.2)',
+          width: 56, height: 56,
+          borderRadius: 16,
+          background: 'rgba(201,169,110,0.1)',
+          border: '1.5px solid rgba(201,169,110,0.2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 24, flexShrink: 0,
+          fontSize: 26, flexShrink: 0,
         }}>
           {emoji}
         </div>
 
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF' }}>{label}</p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#F0F4FF' }}>{label}</p>
             {badge && (
               <span style={{
                 fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 99,
@@ -81,7 +81,7 @@ function Counter({ label, emoji, ageRange, badge, badgeColor, value, min, max, o
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 600, damping: 22 }}
-          style={{ minWidth: 30, textAlign: 'center', fontSize: 24, fontWeight: 900, color: '#F0F4FF', fontVariantNumeric: 'tabular-nums' }}
+          style={{ minWidth: 36, textAlign: 'center', fontSize: 28, fontWeight: 900, color: '#F0F4FF', fontVariantNumeric: 'tabular-nums' }}
         >
           {value}
         </motion.span>
@@ -114,28 +114,32 @@ export const Step3Passengers = forwardRef<StepHandle>(function Step3Passengers(_
   const total = data.passengers.adultos + data.passengers.ninos_2_12 + data.passengers.bebes_0_2
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-
-      {/* Header */}
-      <div style={{ textAlign: 'center' }}>
-        <motion.div
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          className="step-icon"
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <h2
+          style={{
+            fontSize: 'clamp(32px, 7vw, 52px)',
+            fontWeight: 700,
+            fontFamily: 'var(--font-serif)',
+            letterSpacing: '-0.03em',
+            color: '#F0F4FF',
+            lineHeight: 1.1,
+          }}
         >
-          <span style={{ fontSize: 36 }}>👥</span>
-        </motion.div>
-        <h2 style={{ fontSize: 'clamp(21px,5vw,26px)', fontWeight: 800, color: '#F0F4FF', letterSpacing: '-0.02em', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
           ¿Cuántos viajan?
         </h2>
-        <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.85)', fontWeight: 500 }}>
+        <div className="gold-divider" style={{ margin: '20px 0 16px' }} />
+        <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.85)', fontWeight: 500, lineHeight: 1.6, maxWidth: 480 }}>
           Indicanos quiénes integran el grupo
         </p>
-      </div>
+      </motion.div>
 
       {/* Counters */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Counter
           label="Adultos" emoji="🧑" ageRange="Desde 12 años"
           value={data.passengers.adultos} min={1} max={20}
@@ -161,9 +165,9 @@ export const Step3Passengers = forwardRef<StepHandle>(function Step3Passengers(_
       <motion.div
         layout
         style={{
-          padding: '18px 22px',
-          background: 'rgba(245,158,11,0.07)',
-          border: '1.5px solid rgba(245,158,11,0.2)',
+          padding: '20px 24px',
+          background: 'rgba(201,169,110,0.07)',
+          border: '1.5px solid rgba(201,169,110,0.2)',
           borderRadius: 18,
           display: 'flex',
           alignItems: 'center',

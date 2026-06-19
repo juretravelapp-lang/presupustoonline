@@ -26,27 +26,32 @@ export const Step4Preferences = forwardRef<StepHandle>(function Step4Preferences
   }))
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.35 }}
-          className="step-icon"
+    <div className="space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <h2
+          style={{
+            fontSize: 'clamp(32px, 7vw, 52px)',
+            fontWeight: 700,
+            fontFamily: 'var(--font-serif)',
+            letterSpacing: '-0.03em',
+            color: '#F0F4FF',
+            lineHeight: 1.1,
+          }}
         >
-          <span style={{ fontSize: 32 }}>✨</span>
-        </motion.div>
-        <h2 style={{ fontSize: 'clamp(20px,5vw,26px)', fontWeight: 800, color: '#F0F4FF', letterSpacing: '-0.02em', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
           ¿Qué incluimos?
         </h2>
-        <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.9)', fontWeight: 500 }}>
+        <div className="gold-divider" style={{ margin: '20px 0 16px' }} />
+        <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.9)', fontWeight: 500, lineHeight: 1.6, maxWidth: 480 }}>
           Seleccioná los servicios que necesitás
         </p>
-      </div>
+      </motion.div>
 
       {/* Options */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {PREFERENCIAS_SERVICIOS.map((servicio, index) => {
           const isSelected = selected.includes(servicio.value)
           const isUpsell = servicio.value === 'asistencia_viajero'
@@ -64,7 +69,7 @@ export const Step4Preferences = forwardRef<StepHandle>(function Step4Preferences
                 display: 'flex',
                 alignItems: 'center',
                 gap: 14,
-                padding: '15px 16px',
+                padding: '18px 22px',
                 background: isUpsell ? (isSelected ? 'rgba(52, 211, 153, 0.15)' : 'rgba(52, 211, 153, 0.04)') : (isSelected ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.04)'),
                 border: isUpsell ? (isSelected ? '1.5px solid rgba(52, 211, 153, 0.5)' : '1.5px solid rgba(52, 211, 153, 0.2)') : (isSelected ? '1.5px solid rgba(245,158,11,0.45)' : '1.5px solid rgba(255,255,255,0.08)'),
                 borderRadius: 14,

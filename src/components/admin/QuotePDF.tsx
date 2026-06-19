@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     borderBottomWidth: 2,
-    borderBottomColor: '#F59E0B',
+    borderBottomColor: '#C9A96E',
     paddingBottom: 20,
     marginBottom: 30,
   },
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     color: '#0F1E35',
   },
   logoHighlight: {
-    color: '#F59E0B',
+    color: '#C9A96E',
   },
   subtitle: {
     fontSize: 10,
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 32,
     fontWeight: 800,
-    color: '#D97706',
+    color: '#C9A96E',
   },
   priceDisclaimer: {
     fontSize: 9,
@@ -185,7 +185,7 @@ export const QuotePDF: React.FC<QuotePDFProps> = ({ quote, selectedProvider }) =
 
         {/* Datos del Viajero */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Datos del Viajero</Text>
+          <Text style={styles.sectionTitle}>👤 Datos del Viajero</Text>
           <View style={styles.gridRow}>
             <Text style={styles.gridLabel}>Nombre Completo</Text>
             <Text style={styles.gridValue}>{quote.nombre} {quote.apellido}</Text>
@@ -206,7 +206,7 @@ export const QuotePDF: React.FC<QuotePDFProps> = ({ quote, selectedProvider }) =
 
         {/* Planificación de Viaje */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Planificación de Viaje</Text>
+          <Text style={styles.sectionTitle}>✈️ Planificación de Viaje</Text>
           <View style={styles.gridRow}>
             <Text style={styles.gridLabel}>Salida</Text>
             <Text style={styles.gridValue}>{quote.ciudad_salida?.toUpperCase().replace(/_/g, ' ') || 'No especificada'}</Text>
@@ -227,14 +227,14 @@ export const QuotePDF: React.FC<QuotePDFProps> = ({ quote, selectedProvider }) =
 
         {/* Servicios Incluidos */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Servicios Incluidos</Text>
+          <Text style={styles.sectionTitle}>✨ Servicios Incluidos</Text>
           <Text style={styles.preferencesText}>{preferencesText}</Text>
         </View>
 
         {/* Observaciones */}
         {quote.comentarios ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Observaciones del Cliente</Text>
+            <Text style={styles.sectionTitle}>📝 Observaciones del Cliente</Text>
             <View style={styles.commentsBox}>
               <Text style={styles.commentsText}>{quote.comentarios}</Text>
             </View>

@@ -1,22 +1,20 @@
 import { useState, forwardRef, useImperativeHandle } from 'react'
 import { useWizardStore } from '@/stores/wizardStore'
 import { DESTINOS_POPULARES } from '@/lib/constants'
-import { Search, X, MapPin, Plus, Trash2 } from 'lucide-react'
+import { Search, X, Plus, Trash2, MapPin } from 'lucide-react'
 import type { StepHandle } from '../WizardShell'
 import { motion, AnimatePresence } from 'motion/react'
 
 export const Step1Destination = forwardRef<StepHandle>(function Step1Destination(_, ref) {
   const { data, updateData, markStepCompleted } = useWizardStore()
 
-  /* ── Local state ───────────────────────────────────────── */
-  const [search, setSearch]     = useState('')
-  const [selected, setSelected]   = useState<string[]>(data.destination.destinos_seleccionados)
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState<string[]>(data.destination.destinos_seleccionados)
   const [customList, setCustomList] = useState<string[]>(data.destination.destinos_custom)
-  const [showError, setShowError]   = useState(false)
+  const [showError, setShowError] = useState(false)
 
   const allDestinos = [...selected, ...customList]
 
-  /* ── Toggle popular destino ─────────────────────────────── */
   const toggleDestino = (value: string) => {
     setShowError(false)
     setSelected(prev =>
@@ -24,12 +22,10 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
     )
   }
 
-  /* ── Add custom/popular destination from search ───────── */
   const addFromSearch = () => {
     const trimmed = search.trim()
     if (!trimmed) return
 
-    // Check if it matches a popular destination (by label, case-insensitive)
     const matchedPopular = DESTINOS_POPULARES.find(
       d => d.label.toLowerCase() === trimmed.toLowerCase()
     )
@@ -50,7 +46,6 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
   const removeCustom = (val: string) =>
     setCustomList(prev => prev.filter(d => d !== val))
 
-  /* ── Validate & Auto-capture ────────────────────────────── */
   useImperativeHandle(ref, () => ({
     validate: async () => {
       let finalSelected = [...selected]
@@ -58,11 +53,9 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
 
       const trimmedSearch = search.trim()
       if (trimmedSearch) {
-        // Auto-capture the current search input text as destination before moving next
         const matchedPopular = DESTINOS_POPULARES.find(
           d => d.label.toLowerCase() === trimmedSearch.toLowerCase()
         )
-
         if (matchedPopular) {
           if (!finalSelected.includes(matchedPopular.value)) {
             finalSelected.push(matchedPopular.value)
@@ -87,129 +80,126 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
 
       updateData('destination', {
         destinos_seleccionados: finalSelected,
-        destinos_custom:        finalCustomList,
-        destino:                all[0],
-        destino_personalizado:  finalCustomList.join(', '),
+        destinos_custom: finalCustomList,
+        destino: all[0],
+        destino_personalizado: finalCustomList.join(', '),
       })
       markStepCompleted('destination')
       return true
     },
   }))
 
-  /* Helper to check if search input is already added */
   const trimmedSearch = search.trim()
   const popularItem = trimmedSearch ? DESTINOS_POPULARES.find(p => p.label.toLowerCase() === trimmedSearch.toLowerCase()) : null
   const isSelectedPopular = popularItem ? selected.includes(popularItem.value) : false
   const isCustom = customList.some(c => c.toLowerCase() === trimmedSearch.toLowerCase())
   const alreadyAdded = isSelectedPopular || isCustom
 
-  /* ── Render ─────────────────────────────────────────────── */
   return (
-    <div className="flex flex-col gap-10 max-w-3xl mx-auto w-full px-4 sm:px-6">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="text-center space-y-3">
-        <motion.h2
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-3xl sm:text-4xl font-extrabold text-slate-100 tracking-tight"
-        >
-          ¿Hacia dónde viajamos?
-        </motion.h2>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="text-base sm:text-lg text-slate-400 font-medium"
-        >
-          Escribe tu destino ideal. Puedes elegir un solo lugar o armar un viaje multi-destino.
-        </motion.p>
-      </div>
-
-      {/* ── Foolproof Flexbox Search Pill ─────────────────────────────────────── */}
-      <motion.div 
+    <div className="flex flex-col" style={{ gap: 28 }}>
+      {/* Header */}
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="w-full flex flex-col items-center gap-2"
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       >
-        {/* The Pill */}
-        <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/80 p-2 sm:p-2.5 rounded-[2rem] sm:rounded-full shadow-xl focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/30 transition-all flex flex-col sm:flex-row items-center gap-2">
-          
-          <div className="flex-1 flex items-center w-full bg-slate-800/50 rounded-full px-4 sm:px-6 h-12 sm:h-14">
-            <Search className="text-slate-400 shrink-0 w-5 h-5 sm:w-6 sm:h-6" />
-            <input
-              type="text"
-              placeholder="Ej: Madrid, Tokio, Bariloche..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  addFromSearch()
-                }
-              }}
-              className="flex-1 bg-transparent text-slate-100 placeholder:text-slate-500 px-3 sm:px-4 focus:outline-none text-base sm:text-lg font-medium w-full"
-              aria-label="Buscar destino"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="text-slate-500 hover:text-slate-300 shrink-0 p-1"
-                aria-label="Limpiar búsqueda"
-              >
-                <X size={18} />
-              </button>
-            )}
-          </div>
-          
+        <h2 style={{
+          fontSize: 'clamp(24px, 5vw, 32px)',
+          fontWeight: 700,
+          fontFamily: 'var(--font-serif)',
+          color: '#F0F4FF',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.15,
+          marginBottom: 6,
+        }}>
+          ¿Hacia dónde viajamos?
+        </h2>
+        <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.8)', fontWeight: 500 }}>
+          Escribí tu destino o elegí uno popular
+        </p>
+      </motion.div>
+
+      {/* Search */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+      >
+        <div style={{
+          display: 'flex', gap: 10, alignItems: 'center',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1.5px solid rgba(255,255,255,0.08)',
+          borderRadius: 14,
+          padding: '4px 4px 4px 18px',
+          transition: 'border-color 0.2s',
+        }}
+          onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(201,169,110,0.4)' }}
+          onBlurCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)' }}
+        >
+          <Search size={20} style={{ color: 'rgba(148,163,184,0.5)', flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Ej: Madrid, Tokio, Bariloche..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addFromSearch() } }}
+            style={{
+              flex: 1, background: 'transparent', border: 'none', outline: 'none',
+              color: '#F0F4FF', fontSize: 15, fontWeight: 500, padding: '14px 8px',
+              fontFamily: 'var(--font-sans)',
+            }}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} style={{ padding: 6, color: 'rgba(148,163,184,0.5)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
+              <X size={18} />
+            </button>
+          )}
           <button
-            type="button"
             onClick={addFromSearch}
             disabled={!search.trim() || alreadyAdded}
-            className={`w-full sm:w-auto h-12 sm:h-14 px-8 rounded-full font-bold flex items-center justify-center transition-all shrink-0 text-base sm:text-lg ${
-              !search.trim() || alreadyAdded
-                ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
-                : 'bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-md'
-            }`}
+            style={{
+              padding: '10px 20px', borderRadius: 10, border: 'none',
+              fontWeight: 700, fontSize: 13, cursor: !search.trim() || alreadyAdded ? 'not-allowed' : 'pointer',
+              background: !search.trim() || alreadyAdded ? 'rgba(255,255,255,0.05)' : '#C9A96E',
+              color: !search.trim() || alreadyAdded ? 'rgba(148,163,184,0.4)' : '#0A1526',
+              transition: 'all 0.15s', whiteSpace: 'nowrap',
+              fontFamily: 'var(--font-sans)',
+            }}
           >
-            {alreadyAdded ? 'Agregado' : 'Agregar'}
+            {alreadyAdded ? '✓ Agregado' : 'Agregar'}
           </button>
         </div>
 
-        {/* Error message inline */}
         <AnimatePresence>
           {showError && (
-            <motion.p 
-              initial={{ opacity: 0, y: -5, height: 0 }} 
-              animate={{ opacity: 1, y: 0, height: 'auto' }} 
-              exit={{ opacity: 0, height: 0 }} 
-              className="text-red-400 text-sm font-semibold mt-2 flex items-center gap-1.5"
+            <motion.p
+              initial={{ opacity: 0, y: -4, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{ fontSize: 12, color: '#F87171', fontWeight: 600, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}
             >
-              <X size={14} strokeWidth={3} />
-              Debes agregar al menos un destino para continuar
+              <X size={12} strokeWidth={3} />
+              Agregá al menos un destino para continuar
             </motion.p>
           )}
         </AnimatePresence>
       </motion.div>
 
-      {/* ── Visual List of Selected Destinations (Solid Cards) ───────────────────────────────── */}
+      {/* Selected destinations */}
       <AnimatePresence>
         {allDestinos.length > 0 && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="w-full flex flex-col gap-4"
           >
-            <div className="flex items-center gap-2 mb-2">
-              <MapPin size={20} className="text-amber-500" />
-              <h3 className="text-base sm:text-lg font-bold text-slate-200">
-                Tu Itinerario ({allDestinos.length})
-              </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <MapPin size={16} style={{ color: '#C9A96E' }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(148,163,184,0.9)' }}>
+                Destinos seleccionados <span style={{ color: '#C9A96E' }}>({allDestinos.length})</span>
+              </span>
             </div>
-            
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Process all destinations chronologically */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {allDestinos.map((value, idx) => {
                 const isPopular = selected.includes(value)
                 const dest = isPopular ? DESTINOS_POPULARES.find(d => d.value === value) : null
@@ -219,29 +209,41 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
                 return (
                   <motion.div
                     key={value}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-slate-800/80 border border-slate-700 hover:border-slate-500 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-sm transition-colors group"
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 8, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 12,
+                    }}
                   >
-                    <div className="flex items-center gap-4">
-                      {/* Number badge */}
-                      <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 font-bold flex items-center justify-center shrink-0 border border-amber-500/30">
-                        {idx + 1}
-                      </div>
-                      <div>
-                        <p className="text-slate-100 font-bold text-lg leading-tight flex items-center gap-2">
-                          {emoji} {label}
-                        </p>
-                      </div>
-                    </div>
+                    <span style={{
+                      width: 28, height: 28, borderRadius: '50%',
+                      background: 'rgba(201,169,110,0.1)',
+                      color: '#C9A96E', fontWeight: 700, fontSize: 12,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      {idx + 1}
+                    </span>
+                    <span style={{ flex: 1, fontWeight: 600, fontSize: 14, color: '#F0F4FF' }}>
+                      {emoji} {label}
+                    </span>
                     <button
-                      type="button"
                       onClick={() => isPopular ? toggleDestino(value) : removeCustom(value)}
-                      className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2 rounded-full transition-colors shrink-0"
-                      aria-label={`Quitar ${label}`}
+                      style={{
+                        padding: 6, background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'rgba(148,163,184,0.4)', borderRadius: 6, display: 'flex',
+                        transition: 'color 0.15s',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#F87171' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(148,163,184,0.4)' }}
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={16} />
                     </button>
                   </motion.div>
                 )
@@ -251,26 +253,44 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
         )}
       </AnimatePresence>
 
-      {/* ── Quick Suggestions Chips ────────────────────────── */}
-      <div className="w-full flex flex-col items-center sm:items-start border-t border-slate-800 pt-6">
-        <p className="text-sm font-semibold text-slate-500 mb-4">
-          O añade destinos populares:
+      {/* Popular destinations */}
+      <div>
+        <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(148,163,184,0.5)', marginBottom: 10 }}>
+          Destinos populares
         </p>
-        <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2.5">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {DESTINOS_POPULARES.map(destino => {
             const isSelected = selected.includes(destino.value)
             if (isSelected) return null
-            
+
             return (
               <button
                 key={destino.value}
-                type="button"
                 onClick={() => toggleDestino(destino.value)}
-                className="bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-300 py-2 px-4 rounded-full text-sm font-medium flex items-center gap-2 transition-all hover:bg-slate-800 shadow-sm"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', borderRadius: 999,
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: 'rgba(255,255,255,0.03)',
+                  color: 'rgba(148,163,184,0.8)',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  fontFamily: 'var(--font-sans)',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'rgba(201,169,110,0.3)'
+                  e.currentTarget.style.background = 'rgba(201,169,110,0.06)'
+                  e.currentTarget.style.color = '#F0F4FF'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                  e.currentTarget.style.color = 'rgba(148,163,184,0.8)'
+                }}
               >
-                <span className="text-lg">{destino.emoji}</span>
-                <span>{destino.label}</span>
-                <Plus size={16} className="text-slate-500 ml-1" />
+                <span style={{ fontSize: 16 }}>{destino.emoji}</span>
+                {destino.label}
+                <Plus size={14} style={{ color: 'rgba(148,163,184,0.3)' }} />
               </button>
             )
           })}

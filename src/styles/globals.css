@@ -1,5 +1,5 @@
 /* ─── Google Fonts ──────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ─── Design Tokens ─────────────────────────────────────────────── */
@@ -12,11 +12,18 @@
   --color-surface-card:     rgba(255,255,255,0.05);
   --color-surface-elevated: rgba(255,255,255,0.08);
 
-  /* Brand amber accent */
+  /* Brand amber accent (CTA, highlights) */
   --color-accent:           #F59E0B;
   --color-accent-hover:     #FBBF24;
   --color-accent-muted:     rgba(245,158,11,0.12);
   --color-accent-border:    rgba(245,158,11,0.3);
+
+  /* Brand gold secondary (premium, badges, decorative) */
+  --color-gold:             #C9A96E;
+  --color-gold-hover:       #D4B87A;
+  --color-gold-muted:       rgba(201,169,110,0.12);
+  --color-gold-border:      rgba(201,169,110,0.3);
+  --color-gold-light:       rgba(201,169,110,0.08);
 
   /* Text */
   --color-text-primary:     #F0F4FF;
@@ -44,11 +51,13 @@
   /* Typography */
   --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-display: 'Poppins', var(--font-sans);
+  --font-serif:   'Playfair Display', Georgia, serif;
 
   /* Shadows */
   --shadow-glow:    0 0 40px rgba(245,158,11,0.12);
   --shadow-card:    0 4px 32px rgba(0,0,0,0.4);
   --shadow-button:  0 4px 20px rgba(245,158,11,0.3);
+  --shadow-gold:    0 4px 24px rgba(201,169,110,0.15);
 
   /* Easing */
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
@@ -218,6 +227,44 @@ button, a[role="button"], a, input, textarea, select {
   box-shadow: var(--shadow-card);
 }
 
+/* ─── Gold decorative divider ────────────────────────────────────── */
+.gold-divider {
+  width: 60px;
+  height: 3px;
+  background: var(--color-gold);
+  border-radius: 99px;
+  margin: 16px 0;
+}
+
+.gold-divider-center {
+  width: 60px;
+  height: 3px;
+  background: var(--color-gold);
+  border-radius: 99px;
+  margin: 16px auto;
+}
+
+/* ─── Gold accent text ───────────────────────────────────────────── */
+.text-gold {
+  color: var(--color-gold);
+}
+
+/* ─── Gold badge ──────────────────────────────────────────────────── */
+.badge-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-gold-muted);
+  border: 1px solid var(--color-gold-border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* ─── Gradient text ──────────────────────────────────────────────── */
 .gradient-text {
   background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 50%, #F59E0B 100%);
@@ -229,13 +276,13 @@ button, a[role="button"], a, input, textarea, select {
 /* ─── Input base ─────────────────────────────────────────────────── */
 .input-dark {
   width: 100%;
-  min-height: 52px;
-  padding: 0 16px;
+  min-height: 60px;
+  padding: 0 24px;
   background: rgba(255,255,255,0.04);
   border: 1.5px solid rgba(255,255,255,0.09);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   color: var(--color-text-primary);
-  font-size: 15px;
+  font-size: 16px;
   font-family: var(--font-sans);
   font-weight: 500;
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
@@ -264,17 +311,35 @@ button, a[role="button"], a, input, textarea, select {
   cursor: pointer;
 }
 
+/* ─── Textarea base ──────────────────────────────────────────────── */
+.textarea-dark {
+  width: 100%;
+  min-height: 120px;
+  padding: 18px 24px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.09);
+  border-radius: 16px;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  outline: none;
+  -webkit-appearance: none;
+  resize: vertical;
+}
+
 /* ─── Option chip (toggle buttons) ──────────────────────────────── */
 .option-chip {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 14px;
+  padding: 18px 24px;
   background: rgba(255,255,255,0.04);
   border: 1.5px solid rgba(255,255,255,0.08);
-  border-radius: var(--radius-lg);
+  border-radius: 16px;
   color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s var(--ease-out);
@@ -297,13 +362,13 @@ button, a[role="button"], a, input, textarea, select {
 
 /* ─── Counter button ─────────────────────────────────────────────── */
 .counter-btn {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 1.5px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.04);
   color: var(--color-text-primary);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -383,16 +448,19 @@ button, a[role="button"], a, input, textarea, select {
 
 /* ─── Step icon bubble ───────────────────────────────────────────── */
 .step-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: var(--radius-lg);
-  background: rgba(245,158,11,0.12);
-  border: 1.5px solid rgba(245,158,11,0.25);
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: rgba(201,169,110,0.12);
+  border: 1.5px solid rgba(201,169,110,0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20px;
-  color: var(--color-accent);
+  margin: 0 auto 28px;
+  color: var(--color-gold);
+}
+.step-icon span {
+  font-size: 32px !important;
 }
 
 /* ─── Progress dots ──────────────────────────────────────────────── */
@@ -414,7 +482,7 @@ button, a[role="button"], a, input, textarea, select {
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 /* ─── Error text ─────────────────────────────────────────────────── */
@@ -431,12 +499,12 @@ button, a[role="button"], a, input, textarea, select {
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  background: rgba(245,158,11,0.12);
-  border: 1px solid rgba(245,158,11,0.3);
+  background: rgba(201,169,110,0.12);
+  border: 1px solid rgba(201,169,110,0.3);
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  color: #FBBF24;
+  color: var(--color-gold);
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────── */

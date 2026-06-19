@@ -32,13 +32,13 @@ function SummaryCard({ emoji, title, children, delay = 0 }: { emoji: string; tit
       style={{
         background: 'rgba(255,255,255,0.04)',
         border: '1.5px solid rgba(255,255,255,0.08)',
-        borderRadius: 16,
-        padding: '16px 18px',
+        borderRadius: 18,
+        padding: '20px 24px',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
         <span style={{ fontSize: 20 }}>{emoji}</span>
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'rgba(251,191,36,0.9)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{title}</h3>
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'rgba(201,169,110,0.9)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{title}</h3>
       </div>
       {children}
     </motion.div>
@@ -84,24 +84,29 @@ export function Step6Summary() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="text-center">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.35 }}
-          className="step-icon"
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <h2
+          style={{
+            fontSize: 'clamp(32px, 7vw, 52px)',
+            fontWeight: 700,
+            fontFamily: 'var(--font-serif)',
+            letterSpacing: '-0.03em',
+            color: '#F0F4FF',
+            lineHeight: 1.1,
+          }}
         >
-          <span style={{ fontSize: 32 }}>✅</span>
-        </motion.div>
-        <h2 style={{ fontSize: 'clamp(20px,5vw,26px)', fontWeight: 800, color: '#F0F4FF', letterSpacing: '-0.02em', marginBottom: 6, fontFamily: 'var(--font-display)' }}>
           Revisá tu solicitud
         </h2>
-        <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.9)', fontWeight: 500 }}>
+        <div className="gold-divider" style={{ margin: '20px 0 16px' }} />
+        <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.9)', fontWeight: 500, lineHeight: 1.6, maxWidth: 480 }}>
           Confirmá los datos antes de enviar
         </p>
-      </div>
+      </motion.div>
 
       {/* Destination */}
       <SummaryCard emoji="🗺️" title="Destino" delay={0.08}>
@@ -122,7 +127,7 @@ export function Step6Summary() {
       </SummaryCard>
 
       {/* Dates + Passengers grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <SummaryCard emoji="📅" title="Fechas" delay={0.13}>
           <div style={{ fontSize: 12, color: 'rgba(148,163,184,0.8)', fontWeight: 500, lineHeight: 1.6 }}>
             <p style={{ fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>
@@ -137,7 +142,7 @@ export function Step6Summary() {
             {data.passengers.adultos > 0 && <p>🧑 {data.passengers.adultos} Adultos</p>}
             {data.passengers.ninos_2_12 > 0 && <p>👧 {data.passengers.ninos_2_12} Niños</p>}
             {data.passengers.bebes_0_2 > 0 && <p>👶 {data.passengers.bebes_0_2} Bebés</p>}
-            <p style={{ fontWeight: 800, color: '#F59E0B', marginTop: 4, fontSize: 13 }}>Total: {totalPax}</p>
+            <p style={{ fontWeight: 800, color: '#C9A96E', marginTop: 4, fontSize: 13 }}>Total: {totalPax}</p>
           </div>
         </SummaryCard>
       </div>
@@ -189,21 +194,8 @@ export function Step6Summary() {
               onChange={e => updateData('comments', { comentarios: e.target.value })}
               placeholder="Servicios extra, requisitos especiales, etc."
               rows={3}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                background: 'rgba(255,255,255,0.04)',
-                border: '1.5px solid rgba(255,255,255,0.09)',
-                borderRadius: 10,
-                color: '#F0F4FF',
-                fontSize: 14,
-                fontFamily: 'var(--font-sans)',
-                fontWeight: 500,
-                resize: 'none',
-                outline: 'none',
-                transition: 'border-color 0.2s, box-shadow 0.2s',
-              }}
-              onFocus={e => { e.target.style.borderColor = '#F59E0B'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.12)' }}
+              className="textarea-dark"
+              onFocus={e => { e.target.style.borderColor = '#C9A96E'; e.target.style.boxShadow = '0 0 0 3px rgba(201,169,110,0.12)' }}
               onBlur={e  => { e.target.style.borderColor = 'rgba(255,255,255,0.09)'; e.target.style.boxShadow = 'none' }}
             />
           </div>
@@ -215,16 +207,16 @@ export function Step6Summary() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.45 }}
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}
       >
         {[
           { emoji: '🛡️', label: 'Sin compromiso' },
           { emoji: '⚡', label: 'Respuesta rápida' },
           { emoji: '🌟', label: 'Personalizado' },
         ].map(({ emoji, label }) => (
-          <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 8px', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.1)', borderRadius: 12 }}>
-            <span style={{ fontSize: 20 }}>{emoji}</span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(100,116,139,1)', textAlign: 'center' }}>{label}</span>
+          <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '16px 12px', background: 'rgba(201,169,110,0.05)', border: '1px solid rgba(201,169,110,0.1)', borderRadius: 14 }}>
+            <span style={{ fontSize: 24 }}>{emoji}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(148,163,184,1)', textAlign: 'center' }}>{label}</span>
           </div>
         ))}
       </motion.div>
