@@ -26,7 +26,8 @@ function Counter({ label, emoji, ageRange, badge, badgeColor, value, min, max, o
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '20px 24px',
+        padding: '16px 18px',
+        gap: 12,
         background: 'rgba(255,255,255,0.04)',
         border: '1.5px solid rgba(255,255,255,0.08)',
         borderRadius: 16,
@@ -35,12 +36,12 @@ function Counter({ label, emoji, ageRange, badge, badgeColor, value, min, max, o
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         {/* Icon bubble */}
         <div style={{
-          width: 56, height: 56,
-          borderRadius: 16,
+          width: 48, height: 48,
+          borderRadius: 14,
           background: 'rgba(201,169,110,0.1)',
           border: '1.5px solid rgba(201,169,110,0.2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 26, flexShrink: 0,
+          fontSize: 22, flexShrink: 0,
         }}>
           {emoji}
         </div>
@@ -66,7 +67,7 @@ function Counter({ label, emoji, ageRange, badge, badgeColor, value, min, max, o
       </div>
 
       {/* Counter controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <button
           type="button"
           onClick={() => onChange(Math.max(min, value - 1))}
@@ -81,7 +82,7 @@ function Counter({ label, emoji, ageRange, badge, badgeColor, value, min, max, o
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 600, damping: 22 }}
-          style={{ minWidth: 36, textAlign: 'center', fontSize: 28, fontWeight: 900, color: '#F0F4FF', fontVariantNumeric: 'tabular-nums' }}
+          style={{ minWidth: 24, textAlign: 'center', fontSize: 22, fontWeight: 900, color: '#F0F4FF', fontVariantNumeric: 'tabular-nums' }}
         >
           {value}
         </motion.span>

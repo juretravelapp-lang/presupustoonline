@@ -126,7 +126,7 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
         transition={{ delay: 0.1, duration: 0.3 }}
       >
         <div style={{
-          display: 'flex', gap: 10, alignItems: 'center',
+          display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
           background: 'rgba(255,255,255,0.04)',
           border: '1.5px solid rgba(255,255,255,0.08)',
           borderRadius: 14,
@@ -144,7 +144,7 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addFromSearch() } }}
             style={{
-              flex: 1, background: 'transparent', border: 'none', outline: 'none',
+              flex: 1, minWidth: 140, background: 'transparent', border: 'none', outline: 'none',
               color: '#F0F4FF', fontSize: 15, fontWeight: 500, padding: '14px 8px',
               fontFamily: 'var(--font-sans)',
             }}
@@ -162,7 +162,7 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
               fontWeight: 700, fontSize: 13, cursor: !search.trim() || alreadyAdded ? 'not-allowed' : 'pointer',
               background: !search.trim() || alreadyAdded ? 'rgba(255,255,255,0.05)' : '#C9A96E',
               color: !search.trim() || alreadyAdded ? 'rgba(148,163,184,0.4)' : '#0A1526',
-              transition: 'all 0.15s', whiteSpace: 'nowrap',
+              transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
               fontFamily: 'var(--font-sans)',
             }}
           >
