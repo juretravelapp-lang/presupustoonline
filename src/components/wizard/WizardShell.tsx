@@ -13,7 +13,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { insertQuote, type InsertQuote } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight, Send, Loader2, Check } from 'lucide-react'
-import { WIZARD_STEPS, STEP_LABELS, STEP_EMOJIS } from '@/types/wizard'
+import { WIZARD_STEPS, STEP_LABELS } from '@/types/wizard'
 
 export interface StepHandle {
   validate: () => Promise<boolean>
