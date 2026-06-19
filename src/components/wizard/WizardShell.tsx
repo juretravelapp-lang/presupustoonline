@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState, useEffect } from 'react'
 import { useWizardStore } from '@/stores/wizardStore'
 import { StepWrapper } from './StepWrapper'
+import { SplashIntro } from './SplashIntro'
 import { Step1Destination } from './steps/Step1Destination'
 import { Step2Dates } from './steps/Step2Dates'
 import { Step3Passengers } from './steps/Step3Passengers'
@@ -71,6 +72,7 @@ function ProgressLine({ done }: { done: boolean }) {
 /* ─────────────────────────────────────────────────────────────────── */
 
 export function WizardShell() {
+  const [splashDone, setSplashDone] = useState(false)
   const {
     currentStep, currentStepIndex, direction,
     nextStep, prevStep, isSubmitting,
@@ -191,11 +193,15 @@ export function WizardShell() {
 
   /* ── Render ──────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen pb-32 sm:pb-28"
-      style={{
-        background: 'linear-gradient(160deg, #0A1526 0%, #0F1E35 45%, #0D2040 100%)',
-      }}
-    >
+    <>
+      <AnimatePresence>
+        {!splashDone && <SplashIntro onFinish={() => setSplashDone(true)} />}
+      </AnimatePresence>
+      <div className="min-h-screen pb-32 sm:pb-28"
+        style={{
+          background: 'linear-gradient(160deg, #0A1526 0%, #0F1E35 45%, #0D2040 100%)',
+        }}
+      >
       <a href="#wizard-content" className="skip-link">Saltar al formulario</a>
 
       {/* Auto-Save Toast */}
@@ -390,5 +396,6 @@ export function WizardShell() {
         </motion.div>
       </main>
     </div>
+  </>
   )
 }
