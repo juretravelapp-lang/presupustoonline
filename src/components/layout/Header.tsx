@@ -33,7 +33,7 @@ export function Header() {
           />
           <div>
             <h1 style={{ fontSize: 15, fontWeight: 800, color: '#F0F4FF', letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'var(--font-display)' }}>
-              Jure Travel
+              JURE TRAVEL
             </h1>
             <p style={{ fontSize: 10, color: 'rgba(201,169,110,0.8)', fontWeight: 600, marginTop: 1 }}>
               Presupuesto personalizado

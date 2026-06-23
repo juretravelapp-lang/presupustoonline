@@ -9,15 +9,18 @@ export const CIUDADES_SALIDA = [
 ] as const
 
 export const DESTINOS_POPULARES = [
-  { value: 'brasil',         label: 'Brasil',         emoji: '🌴', color: '#009739' },
-  { value: 'caribe',         label: 'Caribe',         emoji: '🏝️', color: '#00B4D8' },
-  { value: 'europa',         label: 'Europa',         emoji: '🏰', color: '#003399' },
-  { value: 'estados_unidos', label: 'EEUU',           emoji: '🗽', color: '#B22234' },
-  { value: 'mexico',         label: 'México',         emoji: '🌮', color: '#006847' },
-  { value: 'punta_cana',     label: 'Punta Cana',     emoji: '🌊', color: '#CE1126' },
-  { value: 'disney',         label: 'Disney',         emoji: '✨', color: '#1E3A5F' },
-  { value: 'cruceros',       label: 'Cruceros',       emoji: '🚢', color: '#0077B6' },
-  { value: 'otro',           label: 'Otro destino',   emoji: '🗺️', color: '#64748B' },
+  { value: 'punta_cana',     label: 'Punta Cana',        emoji: '🌊', color: '#CE1126' },
+  { value: 'cancun',         label: 'Cancún',            emoji: '🏖️', color: '#006847' },
+  { value: 'playa_del_carmen', label: 'Playa del Carmen', emoji: '🌴', color: '#006847' },
+  { value: 'aruba',          label: 'Aruba',             emoji: '🦩', color: '#0072C6' },
+  { value: 'curazao',        label: 'Curazao',           emoji: '🐠', color: '#002B7F' },
+  { value: 'rio_de_janeiro', label: 'Río de Janeiro',    emoji: '⛰️', color: '#009739' },
+  { value: 'norte_brasil',   label: 'Norte de Brasil',   emoji: '🥥', color: '#009739' },
+  { value: 'usa',            label: 'USA',               emoji: '🗽', color: '#B22234' },
+  { value: 'disney',         label: 'Disney',            emoji: '✨', color: '#1E3A5F' },
+  { value: 'europa',         label: 'Europa',            emoji: '🏰', color: '#003399' },
+  { value: 'cruceros',       label: 'Cruceros',          emoji: '🚢', color: '#0077B6' },
+  { value: 'otro',           label: 'Otros destinos',    emoji: '🗺️', color: '#64748B' },
 ] as const
 
 export const TIPOS_FECHA = [
@@ -27,13 +30,13 @@ export const TIPOS_FECHA = [
 ] as const
 
 export const PREFERENCIAS_SERVICIOS = [
-  { value: 'solo_vuelos', label: 'Solo vuelos', icon: '✈️' },
-  { value: 'vuelo_hotel', label: 'Vuelo + Hotel', icon: '🏨' },
-  { value: 'all_inclusive', label: 'All Inclusive', icon: '🍽️' },
-  { value: 'crucero', label: 'Crucero', icon: '🚢' },
+  { value: 'vuelos',             label: 'Vuelos',                icon: '✈️' },
+  { value: 'hotel',              label: 'Hotel',                 icon: '🏨' },
+  { value: 'traslado',           label: 'Traslado',              icon: '🚐' },
   { value: 'asistencia_viajero', label: 'Asistencia al viajero', icon: '🛡️' },
-  { value: 'traslados', label: 'Traslados', icon: '🚗' },
-  { value: 'excursiones', label: 'Excursiones', icon: '🗺️' },
+  { value: 'tour_actividades',   label: 'Tour / Actividades',    icon: '🎟️' },
+  { value: 'autos',              label: 'Autos',                 icon: '🚗' },
+  { value: 'circuitos_paquetes', label: 'Circuitos / Paquetes',  icon: '🌎' },
 ] as const
 
 export const ESTADOS_LEAD = [

@@ -7,6 +7,9 @@ import { WizardShell } from '@/components/wizard/WizardShell'
 import { useDashboardStats, useAdvancedAnalytics, useQuoteDetail } from '@/hooks/useQuotesQuery'
 import { AnalyticsCharts } from './metrics/AnalyticsCharts'
 import { LeadsDataTable } from './metrics/LeadsDataTable'
+import { TTOOBoard } from './TTOOBoard'
+import { ServiciosBoard } from './ServiciosBoard'
+import { TTOOVencimientosBoard } from './TTOOVencimientosBoard'
 import { QuoteDetailModal } from './QuoteDetailModal'
 import {
   LayoutDashboard,
@@ -24,9 +27,12 @@ import {
   Send,
   Calendar,
   Loader2,
+  Building2,
+  ListPlus,
+  Wallet,
 } from 'lucide-react'
 
-type AdminView = 'metrics' | 'kanban' | 'meetings' | 'operator_wizard'
+type AdminView = 'metrics' | 'kanban' | 'meetings' | 'operator_wizard' | 'ttoo' | 'servicios_cat' | 'vencimientos_ttoo'
 
 export function Dashboard() {
   const { user, logout } = useAuthStore()
@@ -187,6 +193,45 @@ export function Dashboard() {
               <ClipboardPlus size={18} />
               <span>Crear Solicitud</span>
             </button>
+
+            {user?.role === 'admin' && (
+              <>
+                <div style={{ margin: '12px 0 4px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
+                  <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.6)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', paddingLeft: 14 }}>Catálogos</span>
+                </div>
+                
+                <button
+                  onClick={() => handleViewChange('ttoo')}
+                  className={`option-chip ${activeView === 'ttoo' ? 'selected' : ''}`}
+                  style={{ height: 48, padding: '0 14px' }}
+                >
+                  <Building2 size={18} />
+                  <span>Operadores TTOO</span>
+                </button>
+                
+                <button
+                  onClick={() => handleViewChange('servicios_cat')}
+                  className={`option-chip ${activeView === 'servicios_cat' ? 'selected' : ''}`}
+                  style={{ height: 48, padding: '0 14px' }}
+                >
+                  <ListPlus size={18} />
+                  <span>Tipos de Servicio</span>
+                </button>
+
+                <div style={{ margin: '12px 0 4px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
+                  <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.6)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', paddingLeft: 14 }}>Finanzas</span>
+                </div>
+
+                <button
+                  onClick={() => handleViewChange('vencimientos_ttoo')}
+                  className={`option-chip ${activeView === 'vencimientos_ttoo' ? 'selected' : ''}`}
+                  style={{ height: 48, padding: '0 14px' }}
+                >
+                  <Wallet size={18} />
+                  <span>Vencimientos TTOO</span>
+                </button>
+              </>
+            )}
           </nav>
         </div>
 
@@ -350,6 +395,17 @@ export function Dashboard() {
             {/* Render client wizard shell directly */}
             <WizardShell />
           </div>
+        )}
+        {activeView === 'ttoo' && user?.role === 'admin' && (
+          <TTOOBoard />
+        )}
+
+        {activeView === 'servicios_cat' && user?.role === 'admin' && (
+          <ServiciosBoard />
+        )}
+
+        {activeView === 'vencimientos_ttoo' && user?.role === 'admin' && (
+          <TTOOVencimientosBoard />
         )}
       </main>
     </div>

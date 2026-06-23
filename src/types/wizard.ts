@@ -45,6 +45,7 @@ export interface PassengerInfo {
   adultos: number
   ninos_2_12: number
   bebes_0_2: number
+  edades_adultos?: string
 }
 
 export interface PreferencesInfo {

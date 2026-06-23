@@ -19,8 +19,10 @@ export interface QuoteData {
   adultos: number
   ninos_2_12: number
   bebes_0_2: number
+  edades_adultos?: string
   preferencias: string[]
   comentarios?: string
+  ticket_id: string
 }
 
 export function generateWhatsAppMessage(data: QuoteData): string {
@@ -37,25 +39,26 @@ export function generateWhatsAppMessage(data: QuoteData): string {
     fechasText = `• Mes preferido: ${data.mes_preferido || 'No especificado'}`
   }
 
-  const mensaje = `*NUEVA SOLICITUD DE VIAJE*
+const mensaje = `*NUEVA SOLICITUD DE VIAJE*
 ━━━━━━━━━━━━━━━━━━━━
+Ticket: ${data.ticket_id}
 
 👤 *DATOS PERSONALES*
 • Nombre: ${data.nombre} ${data.apellido}
 • DNI: ${data.dni}
-• Email: ${data.email}
+• Email: ${data.email || 'No proporcionado'}
 • Celular: ${data.celular}
 
 ✈️ *VIAJE*
-• Origen: ${data.ciudad_salida}
+• Origen: ${data.ciudad_salida || 'No especificada'}
 • Destino: ${data.destino}${data.destino_personalizado ? ` (${data.destino_personalizado})` : ''}
 • Tipo de fecha: ${data.tipo_fecha.replace(/_/g, ' ')}
 ${fechasText}
 
 👥 *PASAJEROS*
-• Adultos: ${data.adultos}
-• Niños (2-12): ${data.ninos_2_12}
-• Bebés (0-2): ${data.bebes_0_2}
+• Adultos: ${data.adultos}${data.edades_adultos ? ` (Edades: ${data.edades_adultos})` : ''}
+• Niños (2 a 11 años): ${data.ninos_2_12}
+• Bebés (0 a 2 años): ${data.bebes_0_2}
 
 ✨ *SERVICIOS*
 ${preferenciasText}

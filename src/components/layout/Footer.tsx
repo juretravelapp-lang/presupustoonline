@@ -12,7 +12,7 @@ export function Footer() {
           {/* Brand */}
           <div className={isMobile ? '' : 'md:col-span-2'}>
             <div className="flex items-center gap-3 mb-5">
-              <img src={logoImg} alt="Jure Travel" className="w-11 h-11 rounded-[10px] object-contain" />
+              <img src={logoImg} alt="JURE TRAVEL" className="w-11 h-11 rounded-[10px] object-contain" />
               <div>
                 <h3 className="text-[18px] font-bold text-white tracking-[-0.02em] font-sans">Travel Jure</h3>
                 <p className="text-[10px] text-primary/60 font-semibold tracking-[0.1em] uppercase">Viajes Premium</p>

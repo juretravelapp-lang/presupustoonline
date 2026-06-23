@@ -141,12 +141,32 @@ export const Step3Passengers = forwardRef<StepHandle>(function Step3Passengers(_
 
       {/* Counters */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <Counter
-          label="Adultos" emoji="🧑" ageRange="Desde 12 años"
-          value={data.passengers.adultos} min={1} max={20}
-          onChange={val => updateData('passengers', { adultos: val })}
-          delay={0.05}
-        />
+        <div>
+          <Counter
+            label="Adultos" emoji="🧑" ageRange="Desde 12 años"
+            value={data.passengers.adultos} min={1} max={20}
+            onChange={val => updateData('passengers', { adultos: val })}
+            delay={0.05}
+          />
+          {data.passengers.adultos > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              style={{ marginTop: 12 }}
+            >
+              <label className="input-label" htmlFor="edades-adultos">Escribí las edades de los adultos (opcional)</label>
+              <input
+                id="edades-adultos"
+                type="text"
+                placeholder="Ejemplo: 35, 42, 28"
+                className="input-dark"
+                value={data.passengers.edades_adultos || ''}
+                onChange={e => updateData('passengers', { edades_adultos: e.target.value })}
+                style={{ width: '100%' }}
+              />
+            </motion.div>
+          )}
+        </div>
         <Counter
           label="Niños" emoji="👧" ageRange="De 2 a 11 años"
           value={data.passengers.ninos_2_12} min={0} max={15}
@@ -155,7 +175,6 @@ export const Step3Passengers = forwardRef<StepHandle>(function Step3Passengers(_
         />
         <Counter
           label="Bebés" emoji="👶" ageRange="De 0 a 2 años"
-          badge="GRATIS"
           value={data.passengers.bebes_0_2} min={0} max={10}
           onChange={val => updateData('passengers', { bebes_0_2: val })}
           delay={0.15}
@@ -192,7 +211,7 @@ export const Step3Passengers = forwardRef<StepHandle>(function Step3Passengers(_
             )}
             {data.passengers.bebes_0_2 > 0 && (
               <span style={{ fontSize: 12, color: 'rgba(251,191,36,0.85)', fontWeight: 600 }}>
-                👶 {data.passengers.bebes_0_2} Bebé{data.passengers.bebes_0_2 > 1 ? 's' : ''} <span style={{ color: 'rgba(52,211,153,0.8)', fontSize: 10 }}>(gratis)</span>
+                👶 {data.passengers.bebes_0_2} Bebé{data.passengers.bebes_0_2 > 1 ? 's' : ''}
               </span>
             )}
           </div>
@@ -212,7 +231,7 @@ export const Step3Passengers = forwardRef<StepHandle>(function Step3Passengers(_
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 14, background: 'rgba(52,211,153,0.05)', borderRadius: 12, border: '1px solid rgba(52,211,153,0.12)' }}>
         <span style={{ fontSize: 15, flexShrink: 0 }}>💡</span>
         <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.75)', lineHeight: 1.6, fontWeight: 500 }}>
-          Los bebés de <strong style={{ color: '#34D399' }}>0 a 2 años</strong> generalmente viajan gratis en vuelos internacionales (sin asiento propio). Consultá con tu asesor para más detalles.
+          👶 Los bebés de <strong style={{ color: '#34D399' }}>0 a 2 años</strong> generalmente viajan gratis en vuelos (sin asiento propio). Consultá con tu asesor para más detalles.
         </p>
       </div>
     </div>

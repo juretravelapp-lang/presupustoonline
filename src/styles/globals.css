@@ -289,6 +289,10 @@ button, a[role="button"], a, input, textarea, select {
   outline: none;
   -webkit-appearance: none;
 }
+select.input-dark option {
+  background-color: var(--color-app-bg);
+  color: var(--color-text-primary);
+}
 .input-dark::placeholder {
   color: rgba(148,163,184,0.5);
   font-weight: 400;

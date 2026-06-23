@@ -12,6 +12,7 @@ interface WizardState {
   isSubmitting:     boolean
   isSubmitted:      boolean
   hasRestoredDraft: boolean
+  generatedTicket:  string
 
   nextStep:          () => void
   prevStep:          () => void
@@ -21,6 +22,7 @@ interface WizardState {
   setSubmitting:     (value: boolean) => void
   setSubmitted:      (value: boolean) => void
   setHasRestoredDraft: (value: boolean) => void
+  setGeneratedTicket: (ticket: string) => void
   reset:             () => void
 }
 
@@ -42,7 +44,7 @@ const initialData: WizardData = {
     rango_fecha_inicio:  '',
     rango_fecha_fin:     '',
   },
-  passengers:  { adultos: 2, ninos_2_12: 0, bebes_0_2: 0 },
+  passengers:  { adultos: 2, ninos_2_12: 0, bebes_0_2: 0, edades_adultos: '' },
   preferences: { preferencias: [] },
   comments:    { comentarios: '', tipo_viaje: '' },
 }
@@ -58,6 +60,7 @@ export const useWizardStore = create<WizardState>()(
       isSubmitting:     false,
       isSubmitted:      false,
       hasRestoredDraft: false,
+      generatedTicket:  '',
 
       nextStep: () => {
         const { currentStepIndex } = get()
@@ -96,6 +99,7 @@ export const useWizardStore = create<WizardState>()(
       setSubmitting: (value) => set({ isSubmitting: value }),
       setSubmitted:  (value) => set({ isSubmitted: value }),
       setHasRestoredDraft: (value) => set({ hasRestoredDraft: value }),
+      setGeneratedTicket: (ticket) => set({ generatedTicket: ticket }),
 
       reset: () => set({
         currentStep:      'destination',
@@ -106,6 +110,7 @@ export const useWizardStore = create<WizardState>()(
         isSubmitting:     false,
         isSubmitted:      false,
         hasRestoredDraft: false,
+        generatedTicket:  '',
       }),
     }),
     {

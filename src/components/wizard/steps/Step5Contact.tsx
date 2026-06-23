@@ -12,7 +12,7 @@ const schema = z.object({
   nombre:       z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
   apellido:     z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
   dni:          z.string().min(6, 'Mínimo 6 dígitos').max(15, 'Máximo 15 dígitos').regex(/^[\d\.\s\-]+$/, 'Solo números, puntos y guiones'),
-  email:        z.string().email('Email inválido'),
+  email:        z.string().email('Email inválido').optional().or(z.literal('')),
   celular:      z.string().min(8, 'Mínimo 8 dígitos').max(30, 'Máximo 30 caracteres').regex(/^[\d\s\-\+]+$/, 'Solo números, guiones, espacios y +'),
   ciudad_salida: z.string().optional().default(''),
 })
@@ -86,15 +86,24 @@ export const Step5Contact = forwardRef<StepHandle>(function Step5Contact(_, ref)
             lineHeight: 1.1,
           }}
         >
-          Datos de contacto
+          Pasanos tus datos para contactarte
         </h2>
         <div className="gold-divider" style={{ margin: '20px 0 16px' }} />
-        <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.9)', fontWeight: 500, lineHeight: 1.6, maxWidth: 480 }}>
-          ¿Cómo te contactamos para enviarte el presupuesto?
-        </p>
       </motion.div>
 
       <form onSubmit={e => e.preventDefault()} className="space-y-6">
+        {/* Privacy note */}
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', background: 'rgba(201,169,110,0.05)', borderRadius: 14, border: '1px solid rgba(201,169,110,0.12)' }}
+        >
+          <Shield size={16} style={{ color: 'rgba(201,169,110,0.8)', flexShrink: 0, marginTop: 2 }} />
+          <p style={{ fontSize: 13, color: 'rgba(148,163,184,0.75)', lineHeight: 1.5, fontWeight: 500 }}>
+            🔒 Tu información está protegida y no será compartida con terceros. Usamos tus datos solo para contactarte.
+          </p>
+        </motion.div>
+
         {/* Nombre + Apellido row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           {rowFields.map((field, i) => (
@@ -189,18 +198,6 @@ export const Step5Contact = forwardRef<StepHandle>(function Step5Contact(_, ref)
         </motion.div>
       </form>
 
-      {/* Privacy note */}
-      <motion.div
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 16, background: 'rgba(201,169,110,0.05)', borderRadius: 14, border: '1px solid rgba(201,169,110,0.12)' }}
-      >
-        <Shield size={16} style={{ color: 'rgba(201,169,110,0.8)', flexShrink: 0, marginTop: 1 }} />
-        <p style={{ fontSize: 13, color: 'rgba(148,163,184,0.75)', lineHeight: 1.5, fontWeight: 500 }}>
-          Tu información está protegida y no será compartida con terceros. Usamos tus datos solo para enviarte el presupuesto.
-        </p>
-      </motion.div>
     </div>
   )
 })

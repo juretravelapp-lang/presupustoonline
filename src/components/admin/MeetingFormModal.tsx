@@ -17,7 +17,7 @@ export function MeetingFormModal({ meeting, preselectedQuoteId, preselectedQuote
   const isEdit = !!meeting
 
   /* ── Form State ──────────────────────────────────────────────── */
-  const [titulo, setTitulo] = useState(meeting?.titulo || 'Reunión comercial')
+  const [titulo, setTitulo] = useState(meeting?.titulo || 'JURE TRAVEL REUNION')
   const [fechaInicio, setFechaInicio] = useState(meeting?.fecha_inicio ? meeting.fecha_inicio.split('T')[0] : '')
   const [horaInicio, setHoraInicio] = useState(meeting?.fecha_inicio ? meeting.fecha_inicio.split('T')[1]?.substring(0, 5) : '10:00')
   const [fechaFin, setFechaFin] = useState(meeting?.fecha_fin ? meeting.fecha_fin.split('T')[0] : '')
@@ -355,7 +355,7 @@ export function MeetingFormModal({ meeting, preselectedQuoteId, preselectedQuote
                     end = `${yy}${mm}${dd}T${hh}${min}00`
                   }
 
-                  const title = encodeURIComponent(titulo || 'Reunión Comercial')
+                  const title = encodeURIComponent(titulo || 'JURE TRAVEL REUNION')
                   const details = encodeURIComponent(notas || 'Reunión agendada')
                   
                   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}`

@@ -14,12 +14,18 @@ export function formatCurrency(amount: number, currency = 'USD'): string {
 }
 
 export function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  if (typeof date === 'string') {
+    if (date.length === 10 && date.includes('-')) {
+      const [y, m, d] = date.split('-');
+      return `${d}/${m}/${y}`;
+    }
+  }
+  const d = typeof date === 'string' ? new Date(date) : date;
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  }).format(d)
+  }).format(d);
 }
 
 export function getInitials(firstName: string, lastName: string): string {

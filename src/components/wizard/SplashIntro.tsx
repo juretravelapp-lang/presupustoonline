@@ -139,7 +139,7 @@ export function SplashIntro({ onFinish }: SplashIntroProps) {
         >
           <img
             src="/assets/logo.svg"
-            alt="Jure Travel"
+            alt="JURE TRAVEL"
             style={{ width: 'clamp(180px, 40vw, 260px)', height: 'auto', display: 'block' }}
           />
         </motion.div>

@@ -128,11 +128,31 @@ export function KanbanBoard() {
       q.email.toLowerCase().includes(query) ||
       q.destino?.toLowerCase().includes(query) ||
       q.operador_nombre?.toLowerCase().includes(query) ||
-      (q.destino_personalizado && q.destino_personalizado.toLowerCase().includes(query))
+      (q.destino_personalizado && q.destino_personalizado.toLowerCase().includes(query)) ||
+      (q.ticket_id && q.ticket_id.toLowerCase().includes(query))
     )
   })
 
   /* ── Pricing calculations ───────────────────────────────────── */
+  const calculateFinalPrice = (details: import('@/lib/supabase').PricingDetalles | null | undefined) => {
+    if (!details) return 0;
+    
+    // Support legacy calculation if only proveedores exist and no services
+    if (details.proveedor_seleccionado && (!details.servicios || details.servicios.length === 0)) {
+        const prov = details.proveedores?.find(p => p.nombre === details.proveedor_seleccionado)
+        return prov?.precio_final || 0
+    }
+
+    // New services calculation
+    if (details.servicios && details.servicios.length > 0) {
+        const totalCosto = details.servicios.reduce((acc, s) => acc + s.costo, 0);
+        const markup = details.markup_tipo === 'porcentaje' ? totalCosto * (details.markup_valor / 100) : details.markup_valor;
+        return totalCosto + markup;
+    }
+
+    return 0;
+  }
+
   const getColumnTotals = (colId: TravelQuoteRow['estado']) => {
     const colQuotes = filtered.filter(q => q.estado === colId)
     let usd = 0
@@ -140,11 +160,12 @@ export function KanbanBoard() {
 
     colQuotes.forEach(q => {
       const details = q.pricing_detalles
-      if (details && details.proveedor_seleccionado) {
-        const prov = details.proveedores?.find(p => p.nombre === details.proveedor_seleccionado)
-        const price = prov?.precio_final || 0
-        if (details.moneda === 'USD') usd += price
-        if (details.moneda === 'ARS') ars += price
+      if (details) {
+        const price = calculateFinalPrice(details)
+        if (price > 0) {
+            if (details.moneda === 'USD') usd += price
+            if (details.moneda === 'ARS') ars += price
+        }
       }
     })
 
@@ -153,11 +174,11 @@ export function KanbanBoard() {
 
   const getQuotePriceText = (quote: TravelQuoteRow) => {
     const details = quote.pricing_detalles
-    if (details && details.proveedor_seleccionado) {
-      const prov = details.proveedores?.find(p => p.nombre === details.proveedor_seleccionado)
-      if (prov) {
+    if (details) {
+      const price = calculateFinalPrice(details)
+      if (price > 0) {
         const symbol = details.moneda === 'USD' ? 'USD $' : 'ARS $'
-        return `${symbol}${prov.precio_final.toLocaleString()}`
+        return `${symbol}${price.toLocaleString()}`
       }
     }
     return 'Sin cotizar'
@@ -180,7 +201,7 @@ export function KanbanBoard() {
             <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(100,116,139,0.7)' }} />
             <input
               type="text"
-              placeholder="Buscar cliente, destino u operador..."
+              placeholder="Buscar por ticket, cliente, destino u operador..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="input-dark"
@@ -416,9 +437,16 @@ function KanbanCard({ quote, priceText, index, onSelect, onMove, onDelete, nextM
     >
       {/* Name and delete */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <h4 style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', lineHeight: 1.2 }}>
-          {quote.nombre} {quote.apellido}
-        </h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {quote.ticket_id && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(201,169,110,0.9)', letterSpacing: '0.05em' }}>
+              {quote.ticket_id}
+            </span>
+          )}
+          <h4 style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', lineHeight: 1.2 }}>
+            {quote.nombre} {quote.apellido}
+          </h4>
+        </div>
         <button
           onClick={(e) => onDelete(e, quote.id)}
           style={{ background: 'none', border: 'none', color: 'rgba(248,113,113,0.5)', cursor: 'pointer', padding: 2, display: 'flex', transition: 'color 0.2s' }}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { updateQuoteDetails, getMeetingsForQuote, deleteMeeting, type TravelQuoteRow, type PricingDetalles, type ProveedorPrecio, type CrmMeeting } from '@/lib/supabase'
 import { MeetingFormModal } from './MeetingFormModal'
+import { useTTOOList, useServiciosList } from '@/hooks/useCatalogQuery'
 import { X, Calendar, DollarSign, FileText, CheckCircle, Printer, Save, Clock, Plus, Trash2, MapPin, Video, Phone, Loader2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { PDFDownloadLink } from '@react-pdf/renderer'
@@ -16,6 +17,10 @@ type TabType = 'general' | 'agenda' | 'pricing'
 export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChange }: ModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('general')
   const [saving, setSaving] = useState(false)
+
+  /* ── Catalogs ────────────────────────────────────────────────── */
+  const { data: ttoos } = useTTOOList()
+  const { data: serviciosCatalog } = useServiciosList()
 
   /* ── CRM Agenda States ───────────────────────────────────────── */
   const [notasCrm, setNotasCrm]           = useState(quote.notas_crm || '')
@@ -54,47 +59,64 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
     }
   }
 
+  /* ── General Edit Mode ───────────────────────────────────────── */
+  const [editMode, setEditMode] = useState(false)
+  const [editedQuote, setEditedQuote] = useState<TravelQuoteRow>(quote)
+
+  const saveGeneralDetails = async () => {
+    setSaving(true)
+    try {
+      await updateQuoteDetails(quote.id, {
+        nombre: editedQuote.nombre,
+        apellido: editedQuote.apellido,
+        dni: editedQuote.dni,
+        email: editedQuote.email,
+        celular: editedQuote.celular,
+        adultos: editedQuote.adultos,
+        ninos_2_12: editedQuote.ninos_2_12,
+        bebes_0_2: editedQuote.bebes_0_2,
+        edades_adultos: editedQuote.edades_adultos,
+        ciudad_salida: editedQuote.ciudad_salida,
+        tipo_viaje: editedQuote.tipo_viaje,
+        destino_personalizado: editedQuote.destino_personalizado,
+        mes_preferido: editedQuote.mes_preferido,
+      })
+      setEditMode(false)
+      alert('✓ Detalles actualizados')
+    } catch (err) {
+      console.error(err)
+      alert('Error al guardar detalles')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   /* ── CRM Pricing States ──────────────────────────────────────── */
   const initPricing = (): PricingDetalles => {
-    if (quote.pricing_detalles && quote.pricing_detalles.proveedores?.length) {
-      return quote.pricing_detalles as PricingDetalles
+    if (quote.pricing_detalles) {
+      const p = quote.pricing_detalles as PricingDetalles
+      if (!p.servicios) p.servicios = []
+      if (p.proveedores?.length && p.proveedor_seleccionado && p.servicios.length === 0) {
+         const winner = p.proveedores.find(x => x.nombre === p.proveedor_seleccionado)
+         if (winner) {
+            if (winner.hotel_costo) p.servicios.push({ id: crypto.randomUUID(), tipo: 'Hotel', descripcion: `Hotel - ${winner.nombre}`, costo: winner.hotel_costo, fecha_vto_ttoo: '' })
+            if (winner.vuelos_costo) p.servicios.push({ id: crypto.randomUUID(), tipo: 'Vuelo', descripcion: `Vuelo - ${winner.nombre}`, costo: winner.vuelos_costo, fecha_vto_ttoo: '' })
+            if (winner.otros_costo) p.servicios.push({ id: crypto.randomUUID(), tipo: 'Otro', descripcion: `Otros - ${winner.nombre}`, costo: winner.otros_costo, fecha_vto_ttoo: '' })
+         }
+      }
+      p.markup_valor = 20
+      p.markup_tipo = 'porcentaje'
+      return p
     }
     return {
       moneda: 'USD',
       markup_tipo: 'porcentaje',
-      markup_valor: 10,
-      proveedor_seleccionado: null,
-      proveedores: [
-        { nombre: 'Proveedor A', hotel_costo: 0, vuelos_costo: 0, otros_costo: 0, markup_aplicado: 0, precio_final: 0 },
-        { nombre: 'Proveedor B', hotel_costo: 0, vuelos_costo: 0, otros_costo: 0, markup_aplicado: 0, precio_final: 0 },
-        { nombre: 'Proveedor C', hotel_costo: 0, vuelos_costo: 0, otros_costo: 0, markup_aplicado: 0, precio_final: 0 },
-        { nombre: 'Proveedor D', hotel_costo: 0, vuelos_costo: 0, otros_costo: 0, markup_aplicado: 0, precio_final: 0 },
-      ],
+      markup_valor: 20,
+      servicios: [],
     }
   }
 
   const [pricing, setPricing] = useState<PricingDetalles>(initPricing)
-
-  /* ── Calculations helper ────────────────────────────────────── */
-  const calculateFinalPrice = (
-    hotel: number,
-    vuelo: number,
-    otros: number,
-    markupVal: number,
-    markupTipo: 'porcentaje' | 'fijo'
-  ) => {
-    const costo = hotel + vuelo + otros
-    let markup = 0
-    if (markupTipo === 'porcentaje') {
-      markup = costo * (markupVal / 100)
-    } else {
-      markup = markupVal
-    }
-    return {
-      markup,
-      total: costo + markup,
-    }
-  }
 
   /* ── Save CRM Notes ─────────────────────────────────────────── */
   const saveCrmNotes = async () => {
@@ -119,30 +141,40 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
     presencial: MapPin, videollamada: Video, telefonica: Phone,
   }
 
-  /* ── Save Provider Pricing ──────────────────────────────────── */
-  const saveProviderPricing = async (winningProviderName: string | null) => {
+  /* ── Calculations & Services helper ────────────────────────── */
+  const totalCosto = (pricing.servicios || []).reduce((acc, s) => acc + s.costo, 0)
+  const totalMarkup = pricing.markup_tipo === 'porcentaje' ? totalCosto * (pricing.markup_valor / 100) : pricing.markup_valor
+  const precioFinal = totalCosto + totalMarkup
+
+  const addService = () => {
+    setPricing(p => ({
+      ...p,
+      servicios: [...(p.servicios || []), { id: crypto.randomUUID(), tipo: 'Vuelo', descripcion: '', costo: 0, fecha_vto_ttoo: '' }]
+    }))
+  }
+
+  const removeService = (id: string) => {
+    setPricing(p => ({
+      ...p,
+      servicios: (p.servicios || []).filter(s => s.id !== id)
+    }))
+  }
+
+  const updateService = (id: string, field: keyof import('@/lib/supabase').ServicioPrecio, value: any) => {
+    setPricing(p => ({
+      ...p,
+      servicios: (p.servicios || []).map(s => s.id === id ? { ...s, [field]: value } : s)
+    }))
+  }
+
+  /* ── Save Pricing ──────────────────────────────────── */
+  const savePricing = async () => {
     setSaving(true)
     try {
-      // Re-calculate all provider prices with current state values
-      const updatedProviders = pricing.proveedores.map(p => {
-        const { markup, total } = calculateFinalPrice(
-          p.hotel_costo,
-          p.vuelos_costo,
-          p.otros_costo,
-          pricing.markup_valor,
-          pricing.markup_tipo
-        )
-        return {
-          ...p,
-          markup_aplicado: markup,
-          precio_final: total,
-        }
-      })
-
       const updatedPricing: PricingDetalles = {
         ...pricing,
-        proveedor_seleccionado: winningProviderName,
-        proveedores: updatedProviders,
+        markup_valor: 20,
+        markup_tipo: 'porcentaje'
       }
 
       setPricing(updatedPricing)
@@ -150,23 +182,17 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
       // Save to supabase
       await updateQuoteDetails(quote.id, {
         pricing_detalles: updatedPricing,
-        // If there's a winning provider, update the status to 'cotizado' if it was 'no_cotizado' or 'en_cotizacion'
-        estado: winningProviderName && (quote.estado === 'no_cotizado' || quote.estado === 'en_cotizacion') 
-          ? 'cotizado' 
-          : quote.estado
+        estado: (quote.estado === 'no_cotizado' || quote.estado === 'en_cotizacion') ? 'cotizado' : quote.estado
       })
 
-      alert('✓ Precios actualizados con éxito')
+      alert('✓ Presupuesto actualizado con éxito')
     } catch (err) {
       console.error(err)
-      alert('Error al actualizar importes')
+      alert('Error al guardar presupuesto')
     } finally {
       setSaving(false)
     }
   }
-
-  /* ── Get Winning Provider helper ──────────────────────────── */
-  const selectedProvider = pricing.proveedores.find(p => p.nombre === pricing.proveedor_seleccionado)
 
 
   return (
@@ -180,7 +206,7 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
       <div
         className="glass-card flex flex-col"
         style={{
-          width: '100%', maxWidth: 720, maxHeight: '90vh',
+          width: '100%', maxWidth: 900, maxHeight: '90vh',
           background: 'linear-gradient(160deg, #0F1E35 0%, #0D2040 100%)',
           borderRadius: 24, overflow: 'hidden',
         }}
@@ -193,7 +219,7 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <h3 style={{ fontSize: 18, fontWeight: 800, color: '#F0F4FF', marginTop: 2 }}>
-                {quote.nombre} {quote.apellido}
+                {quote.nombre} {quote.apellido} {quote.ticket_id ? ` - ${quote.ticket_id}` : ''}
               </h3>
               <button
                 onClick={() => {
@@ -251,56 +277,108 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
           {/* ─── TAB 1: General details ───────────────────────────── */}
           {activeTab === 'general' && (
             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: -6 }}>
+                <button
+                  onClick={() => editMode ? saveGeneralDetails() : setEditMode(true)}
+                  disabled={saving}
+                  style={{
+                    padding: '6px 16px', borderRadius: 10,
+                    background: editMode ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.05)',
+                    border: editMode ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(255,255,255,0.1)',
+                    color: editMode ? '#34D399' : '#94A3B8', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.15s',
+                  }}
+                >
+                  <Save size={14} />
+                  {editMode ? (saving ? 'Guardando...' : 'Guardar Cambios') : 'Editar Detalles'}
+                </button>
+              </div>
+
               {/* Contact info grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
                   <p className="input-label" style={{ marginBottom: 6 }}>Contacto</p>
-                  <p style={{ fontSize: 13, fontWeight: 600 }}>DNI: {quote.dni}</p>
-                  <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Email: {quote.email}</p>
-                  <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Celular: {quote.celular}</p>
+                  {editMode ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <input type="text" className="input-dark" value={editedQuote.nombre} onChange={e => setEditedQuote(q => ({...q, nombre: e.target.value}))} placeholder="Nombre" style={{height: 30, fontSize: 12}} />
+                      <input type="text" className="input-dark" value={editedQuote.apellido} onChange={e => setEditedQuote(q => ({...q, apellido: e.target.value}))} placeholder="Apellido" style={{height: 30, fontSize: 12}} />
+                      <input type="text" className="input-dark" value={editedQuote.dni} onChange={e => setEditedQuote(q => ({...q, dni: e.target.value}))} placeholder="DNI" style={{height: 30, fontSize: 12}} />
+                      <input type="email" className="input-dark" value={editedQuote.email} onChange={e => setEditedQuote(q => ({...q, email: e.target.value}))} placeholder="Email" style={{height: 30, fontSize: 12}} />
+                      <input type="text" className="input-dark" value={editedQuote.celular} onChange={e => setEditedQuote(q => ({...q, celular: e.target.value}))} placeholder="Celular" style={{height: 30, fontSize: 12}} />
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: 13, fontWeight: 600 }}>DNI: {quote.dni}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Email: {quote.email}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Celular: {quote.celular}</p>
+                    </>
+                  )}
                 </div>
                 <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
                   <p className="input-label" style={{ marginBottom: 6 }}>Plan</p>
-                  <p style={{ fontSize: 13, fontWeight: 600 }}>Pasajeros: {quote.adultos} Ad / {quote.ninos_2_12} Ni / {quote.bebes_0_2} Be</p>
-                  <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Salida: {quote.ciudad_salida?.toUpperCase().replace(/_/g, ' ') || 'No especificada'}</p>
-                  <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Tipo: {quote.tipo_viaje ? quote.tipo_viaje.toUpperCase() : 'Vacaciones'}</p>
+                  {editMode ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <input type="number" className="input-dark" value={editedQuote.adultos} onChange={e => setEditedQuote(q => ({...q, adultos: Number(e.target.value)}))} placeholder="Ad" style={{height: 30, fontSize: 12, flex: 1}} />
+                        <input type="number" className="input-dark" value={editedQuote.ninos_2_12} onChange={e => setEditedQuote(q => ({...q, ninos_2_12: Number(e.target.value)}))} placeholder="Ni" style={{height: 30, fontSize: 12, flex: 1}} />
+                        <input type="number" className="input-dark" value={editedQuote.bebes_0_2} onChange={e => setEditedQuote(q => ({...q, bebes_0_2: Number(e.target.value)}))} placeholder="Be" style={{height: 30, fontSize: 12, flex: 1}} />
+                      </div>
+                      <input type="text" className="input-dark" value={editedQuote.edades_adultos || ''} onChange={e => setEditedQuote(q => ({...q, edades_adultos: e.target.value}))} placeholder="Edades (ej: 25, 30)" style={{height: 30, fontSize: 12}} />
+                      <input type="text" className="input-dark" value={editedQuote.ciudad_salida || ''} onChange={e => setEditedQuote(q => ({...q, ciudad_salida: e.target.value}))} placeholder="Ciudad Salida" style={{height: 30, fontSize: 12}} />
+                      <input type="text" className="input-dark" value={editedQuote.tipo_viaje || ''} onChange={e => setEditedQuote(q => ({...q, tipo_viaje: e.target.value}))} placeholder="Tipo (Vacaciones...)" style={{height: 30, fontSize: 12}} />
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: 13, fontWeight: 600 }}>Pasajeros: {quote.adultos} Ad {quote.edades_adultos ? `(Edades: ${quote.edades_adultos}) ` : ''}/ {quote.ninos_2_12} Ni / {quote.bebes_0_2} Be</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Salida: {quote.ciudad_salida?.toUpperCase().replace(/_/g, ' ') || 'No especificada'}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Tipo: {quote.tipo_viaje ? quote.tipo_viaje.toUpperCase() : 'Vacaciones'}</p>
+                    </>
+                  )}
                 </div>
               </div>
 
               {/* Destinations */}
               <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
                 <p className="input-label" style={{ marginBottom: 8 }}>Destino(s)</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {quote.destinos.map(d => (
-                    <span key={d} className="chip-tag" style={{ fontSize: 11 }}>📍 {d.replace(/_/g, ' ')}</span>
-                  ))}
-                  {quote.destino_personalizado && (
-                    <span className="chip-tag" style={{ fontSize: 11, background: 'rgba(148,163,184,0.1)', borderColor: 'rgba(148,163,184,0.2)', color: '#94A3B8' }}>✏️ {quote.destino_personalizado}</span>
-                  )}
-                </div>
+                {editMode ? (
+                  <input type="text" className="input-dark" value={editedQuote.destino_personalizado || ''} onChange={e => setEditedQuote(q => ({...q, destino_personalizado: e.target.value}))} placeholder="Ingresá los destinos (o cambia el personalizado)" style={{height: 36, fontSize: 12}} />
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {quote.destinos.map(d => (
+                      <span key={d} className="chip-tag" style={{ fontSize: 11 }}>📍 {d.replace(/_/g, ' ')}</span>
+                    ))}
+                    {quote.destino_personalizado && (
+                      <span className="chip-tag" style={{ fontSize: 11, background: 'rgba(148,163,184,0.1)', borderColor: 'rgba(148,163,184,0.2)', color: '#94A3B8' }}>✏️ {quote.destino_personalizado}</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Dates Info */}
               <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', border: '1.5px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
                 <p className="input-label" style={{ marginBottom: 6 }}>Fechas</p>
-                <p style={{ fontSize: 13, fontWeight: 700 }}>
-                  Modo: {quote.tipo_fecha === 'exacta' ? 'Fechas Exactas' : 'Mes Flexible'}
-                </p>
-                <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.9)', marginTop: 4 }}>
-                  Fechas: {quote.tipo_fecha === 'exacta'
-                    ? `${quote.fecha_salida ? formatDate(quote.fecha_salida) : '—'} al ${quote.fecha_regreso ? formatDate(quote.fecha_regreso) : '—'}`
-                    : quote.mes_preferido || '—'
-                  }
-                </p>
-                {Object.keys(quote.dates?.fechas_por_destino || {}).length > 0 && (
-                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <p style={{ fontSize: 11, color: '#FBBF24', fontWeight: 800 }}>Desglose por destino:</p>
-                    {Object.entries(quote.dates.fechas_por_destino).map(([dest, info]: [string, any]) => (
-                      <p key={dest} style={{ fontSize: 11, color: 'rgba(148,163,184,0.8)' }}>
-                        👉 <strong>{dest.replace(/_/g, ' ')}</strong>: {info.fecha_salida ? formatDate(info.fecha_salida) : '—'} al {info.fecha_regreso ? formatDate(info.fecha_regreso) : '—'}
-                      </p>
-                    ))}
-                  </div>
+                {editMode && editedQuote.tipo_fecha === 'mes' ? (
+                  <input type="text" className="input-dark" value={editedQuote.mes_preferido || ''} onChange={e => setEditedQuote(q => ({...q, mes_preferido: e.target.value}))} placeholder="Mes preferido" style={{height: 36, fontSize: 12}} />
+                ) : (
+                  <>
+                    <p style={{ fontSize: 13, fontWeight: 700 }}>Modo: {quote.tipo_fecha === 'exacta' ? 'Fechas Exactas' : 'Mes Flexible'}</p>
+                    <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.9)', marginTop: 4 }}>
+                      Fechas: {quote.tipo_fecha === 'exacta'
+                        ? `${quote.fecha_salida ? formatDate(quote.fecha_salida) : '—'} al ${quote.fecha_regreso ? formatDate(quote.fecha_regreso) : '—'}`
+                        : quote.mes_preferido || '—'
+                      }
+                    </p>
+                    {Object.keys(quote.dates?.fechas_por_destino || {}).length > 0 && (
+                      <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <p style={{ fontSize: 11, color: '#FBBF24', fontWeight: 800 }}>Desglose por destino:</p>
+                        {Object.entries(quote.dates.fechas_por_destino).map(([dest, info]: [string, any]) => (
+                          <p key={dest} style={{ fontSize: 11, color: 'rgba(148,163,184,0.8)' }}>
+                            👉 <strong>{dest.replace(/_/g, ' ')}</strong>: {info.fecha_salida ? formatDate(info.fecha_salida) : '—'} al {info.fecha_regreso ? formatDate(info.fecha_regreso) : '—'}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -477,9 +555,9 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
           {activeTab === 'pricing' && (
             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Settings selectors */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, padding: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, padding: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14 }}>
                 <div>
-                  <label className="input-label">Moneda</label>
+                  <label className="input-label">Moneda del Presupuesto</label>
                   <select
                     value={pricing.moneda}
                     onChange={e => setPricing(p => ({ ...p, moneda: e.target.value as any }))}
@@ -491,168 +569,197 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
                   </select>
                 </div>
                 <div>
-                  <label className="input-label">Tipo Markup</label>
-                  <select
-                    value={pricing.markup_tipo}
-                    onChange={e => setPricing(p => ({ ...p, markup_tipo: e.target.value as any }))}
-                    className="input-dark"
-                    style={{ height: 42, minHeight: 42 }}
-                  >
-                    <option value="porcentaje">Porcentaje (%)</option>
-                    <option value="fijo">Fijo ($)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="input-label">Valor Markup</label>
-                  <input
-                    type="number"
-                    value={pricing.markup_valor}
-                    onChange={e => setPricing(p => ({ ...p, markup_valor: Number(e.target.value) || 0 }))}
-                    className="input-dark"
-                    style={{ height: 42, minHeight: 42 }}
-                  />
+                  <label className="input-label">Margen de Ganancia (Fijo)</label>
+                  <div style={{ height: 42, display: 'flex', alignItems: 'center', padding: '0 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, color: 'rgba(148,163,184,0.7)', fontSize: 13 }}>
+                    20% (Porcentaje)
+                  </div>
                 </div>
               </div>
 
-              {/* 4 Providers Inputs */}
+              {/* Services List */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                <h4 style={{ fontSize: 14, fontWeight: 800, color: '#F0F4FF' }}>Servicios Incluidos</h4>
+                <button
+                  onClick={addService}
+                  style={{
+                    padding: '6px 12px', borderRadius: 10, background: 'rgba(52,211,153,0.1)',
+                    border: '1.5px solid rgba(52,211,153,0.3)', color: '#34D399',
+                    fontSize: 11, fontWeight: 800, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(52,211,153,0.18)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(52,211,153,0.1)')}
+                >
+                  <Plus size={13} /> Agregar Servicio
+                </button>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {pricing.proveedores?.map((prov, index) => {
-                  const isSelected = pricing.proveedor_seleccionado === prov.nombre
-                  
-                  // Calculate markup and final price on the fly
-                  const { markup, total } = calculateFinalPrice(
-                    prov.hotel_costo,
-                    prov.vuelos_costo,
-                    prov.otros_costo,
-                    pricing.markup_valor,
-                    pricing.markup_tipo
-                  )
-
-                  const updateProvider = (field: keyof ProveedorPrecio, val: number) => {
-                    const nextList = [...pricing.proveedores]
-                    nextList[index] = { ...nextList[index], [field]: val }
-                    setPricing(p => ({ ...p, proveedores: nextList }))
-                  }
-
-                  return (
-                    <div
-                      key={prov.nombre}
-                      style={{
-                        padding: 14,
-                        background: isSelected ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.03)',
-                        border: isSelected ? '1.5px solid rgba(245,158,11,0.45)' : '1.5px solid rgba(255,255,255,0.06)',
-                        borderRadius: 16,
-                      }}
-                    >
-                      {/* Name of provider & select button */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: isSelected ? '#FBBF24' : '#F0F4FF' }}>
-                          🏢 {prov.nombre}
-                        </span>
-                        
-                        <button
-                          onClick={() => saveProviderPricing(prov.nombre)}
-                          style={{
-                            padding: '4px 10px',
-                            background: isSelected ? '#F59E0B' : 'rgba(255,255,255,0.05)',
-                            color: isSelected ? '#0A1526' : '#94A3B8',
-                            border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.15s',
-                          }}
-                        >
-                          <CheckCircle size={12} />
-                          {isSelected ? 'Seleccionado' : 'Elegir Ganador'}
-                        </button>
-                      </div>
-
-                      {/* Inputs grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                        <div>
-                          <label className="input-label" style={{ fontSize: 9 }}>Hotel Costo</label>
-                          <input
-                            type="number"
-                            value={prov.hotel_costo || ''}
-                            onChange={e => updateProvider('hotel_costo', Number(e.target.value) || 0)}
-                            className="input-dark"
-                            style={{ height: 38, minHeight: 38, padding: '0 8px', fontSize: 13 }}
-                          />
-                        </div>
-                        <div>
-                          <label className="input-label" style={{ fontSize: 9 }}>Vuelos Costo</label>
-                          <input
-                            type="number"
-                            value={prov.vuelos_costo || ''}
-                            onChange={e => updateProvider('vuelos_costo', Number(e.target.value) || 0)}
-                            className="input-dark"
-                            style={{ height: 38, minHeight: 38, padding: '0 8px', fontSize: 13 }}
-                          />
-                        </div>
-                        <div>
-                          <label className="input-label" style={{ fontSize: 9 }}>Otros Costo</label>
-                          <input
-                            type="number"
-                            value={prov.otros_costo || ''}
-                            onChange={e => updateProvider('otros_costo', Number(e.target.value) || 0)}
-                            className="input-dark"
-                            style={{ height: 38, minHeight: 38, padding: '0 8px', fontSize: 13 }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Price outputs calculations */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: 'rgba(148,163,184,0.7)', fontWeight: 600, marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 8 }}>
-                        <span>Costo: {pricing.moneda} ${(prov.hotel_costo + prov.vuelos_costo + prov.otros_costo).toLocaleString()}</span>
-                        <span>Ganancia (+): {pricing.moneda} ${markup.toLocaleString()}</span>
-                        <span style={{ color: '#34D399', fontWeight: 800 }}>
-                          Precio Cliente: {pricing.moneda} ${total.toLocaleString()}
-                        </span>
-                      </div>
+                {pricing.servicios?.length === 0 ? (
+                  <div style={{ padding: '28px 16px', textAlign: 'center', color: 'rgba(100,116,139,0.5)', fontSize: 12, border: '1px dashed rgba(255,255,255,0.06)', borderRadius: 14 }}>
+                    Aún no hay servicios cargados en el presupuesto.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{
+                        padding: '0 14px',
+                        display: 'grid',
+                        gridTemplateColumns: '110px 130px 1fr 100px 120px 100px 32px',
+                        gap: 12,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: 'rgba(148,163,184,0.8)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em'
+                    }}>
+                      <span>Tipo</span>
+                      <span>TTOO</span>
+                      <span>Descripción</span>
+                      <span>Costo</span>
+                      <span>Fecha Vto.</span>
+                      <span>Pago TTOO</span>
+                      <span></span>
                     </div>
-                  )
-                })}
+                    {pricing.servicios?.map((serv) => (
+                      <div
+                        key={serv.id}
+                        style={{
+                          padding: 14,
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1.5px solid rgba(255,255,255,0.06)',
+                          borderRadius: 14,
+                          display: 'grid',
+                          gridTemplateColumns: '110px 130px 1fr 100px 120px 100px 32px',
+                          gap: 12,
+                          alignItems: 'center'
+                        }}
+                      >
+                      <select
+                        value={serv.tipo}
+                        onChange={e => updateService(serv.id, 'tipo', e.target.value)}
+                        className="input-dark"
+                        style={{ height: 38, minHeight: 38, fontSize: 12 }}
+                      >
+                        {serviciosCatalog ? (
+                          serviciosCatalog.map(sc => (
+                            <option key={sc.id} value={sc.nombre}>{sc.nombre}</option>
+                          ))
+                        ) : (
+                          <option value="Cargando...">Cargando...</option>
+                        )}
+                        {!serviciosCatalog?.find(sc => sc.nombre === serv.tipo) && serv.tipo && (
+                          <option value={serv.tipo}>{serv.tipo}</option>
+                        )}
+                      </select>
+
+                      <select
+                        value={serv.ttoo || ''}
+                        onChange={e => updateService(serv.id, 'ttoo', e.target.value)}
+                        className="input-dark"
+                        style={{ height: 38, minHeight: 38, fontSize: 12 }}
+                      >
+                        <option value="">(Sin TTOO)</option>
+                        {ttoos?.map(t => (
+                          <option key={t.id} value={t.nombre}>{t.nombre}</option>
+                        ))}
+                      </select>
+
+                      <input
+                        type="text"
+                        value={serv.descripcion}
+                        onChange={e => updateService(serv.id, 'descripcion', e.target.value)}
+                        className="input-dark"
+                        placeholder="Descripción detallada..."
+                        style={{ height: 38, minHeight: 38, fontSize: 12 }}
+                      />
+
+                      <div style={{ position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: 'rgba(148,163,184,0.7)' }}>$</span>
+                        <input
+                          type="number"
+                          value={serv.costo || ''}
+                          onChange={e => updateService(serv.id, 'costo', Number(e.target.value) || 0)}
+                          className="input-dark"
+                          style={{ height: 38, minHeight: 38, paddingLeft: 22, fontSize: 12 }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <input
+                          type="date"
+                          value={serv.fecha_vto_ttoo || ''}
+                          onChange={e => updateService(serv.id, 'fecha_vto_ttoo', e.target.value)}
+                          className="input-dark"
+                          style={{ height: 38, minHeight: 38, fontSize: 11, padding: '0 8px' }}
+                          title="Fecha de vencimiento TTOO"
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{
+                          height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: serv.estado_pago === 'pagado' ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)',
+                          color: serv.estado_pago === 'pagado' ? '#34D399' : '#F87171',
+                          borderRadius: 8, fontSize: 11, fontWeight: 700, textTransform: 'uppercase'
+                        }}>
+                          {serv.estado_pago === 'pagado' ? 'Pagado' : 'Pendiente'}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => removeService(serv.id)}
+                        style={{ background: 'none', border: 'none', color: 'rgba(248,113,113,0.5)', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#F87171')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'rgba(248,113,113,0.5)')}
+                        title="Eliminar Servicio"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              </div>
+
+              {/* Price outputs calculations */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'rgba(148,163,184,0.8)', fontWeight: 600, marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 14 }}>
+                <span>Costo Total: {pricing.moneda} ${totalCosto.toLocaleString()}</span>
+                <span>Markup (20%): {pricing.moneda} ${totalMarkup.toLocaleString()}</span>
+                <span style={{ color: '#FBBF24', fontWeight: 800, fontSize: 14, background: 'rgba(245,158,11,0.1)', padding: '4px 12px', borderRadius: 8 }}>
+                  Precio Final: {pricing.moneda} ${precioFinal.toLocaleString()}
+                </span>
               </div>
 
               {/* Bottom save pricing grid */}
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 14 }}>
                 <button
-                  onClick={() => saveProviderPricing(pricing.proveedor_seleccionado)}
-                  disabled={saving}
+                  onClick={savePricing}
+                  disabled={saving || (pricing.servicios?.length === 0)}
                   style={{
                     padding: '12px 20px',
                     borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.1)',
                     background: 'rgba(255,255,255,0.03)', color: '#F0F4FF',
-                    fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                    fontSize: 13, fontWeight: 700, cursor: (pricing.servicios?.length === 0) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                    opacity: (pricing.servicios?.length === 0) ? 0.5 : 1
                   }}
                 >
                   <Save size={16} />
-                  Guardar Planilla Costos
+                  Guardar Presupuesto
                 </button>
 
-                {selectedProvider ? (
-                  <PDFDownloadLink
-                    document={<QuotePDF quote={quote} selectedProvider={selectedProvider} />}
-                    fileName={`Presupuesto_Jure_Travel_${quote.nombre}_${quote.apellido}.pdf`}
-                    className="btn-cta"
-                    style={{ height: 44, padding: '0 20px', fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}
-                  >
-                    {({ loading }) => (
-                      <>
-                        <Printer size={16} />
-                        {loading ? 'Generando PDF...' : 'Exportar PDF Cliente'}
-                      </>
-                    )}
-                  </PDFDownloadLink>
-                ) : (
-                  <button
-                    onClick={() => alert('Seleccioná un proveedor ganador primero para exportar el PDF.')}
-                    className="btn-cta"
-                    style={{ height: 44, padding: '0 20px', fontSize: 13, opacity: 0.5, cursor: 'not-allowed' }}
-                  >
-                    <Printer size={16} />
-                    Exportar PDF Cliente
-                  </button>
-                )}
+                <PDFDownloadLink
+                  document={<QuotePDF quote={quote} pricing={pricing} precioFinal={precioFinal} />}
+                  fileName={`Presupuesto_Jure_Travel_${quote.nombre}_${quote.apellido}.pdf`}
+                  className="btn-cta"
+                  style={{ height: 44, padding: '0 20px', fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}
+                >
+                  {({ loading }) => (
+                    <>
+                      <Printer size={16} />
+                      {loading ? 'Generando PDF...' : 'Exportar PDF Cliente'}
+                    </>
+                  )}
+                </PDFDownloadLink>
               </div>
             </div>
           )}

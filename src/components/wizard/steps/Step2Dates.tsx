@@ -8,6 +8,9 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 const today = new Date().toISOString().split('T')[0]
+const maxDate = new Date()
+maxDate.setDate(maxDate.getDate() + 365)
+const maxLimit = maxDate.toISOString().split('T')[0]
 
 function DateField({ label, id, value, min, onChange }: {
   label: string; id: string; value: string; min?: string; onChange: (v: string) => void
@@ -17,7 +20,7 @@ function DateField({ label, id, value, min, onChange }: {
       <label className="input-label" htmlFor={id}>{label}</label>
       <input
         id={id} type="date"
-        value={value} min={min || today}
+        value={value} min={min || today} max={maxLimit}
         onChange={e => onChange(e.target.value)}
         className="input-dark"
         style={{ width: '100%' }}
@@ -134,7 +137,7 @@ export const Step2Dates = forwardRef<StepHandle>(function Step2Dates(_, ref) {
         </h2>
         <div className="gold-divider" style={{ margin: '20px 0 16px' }} />
         <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.85)', fontWeight: 500, lineHeight: 1.6, maxWidth: 480 }}>
-          Tenés fechas fijas o preferís algo flexible
+          ¿Tenés fechas fijas o preferís algo flexible?
         </p>
       </motion.div>
 
@@ -291,7 +294,7 @@ export const Step2Dates = forwardRef<StepHandle>(function Step2Dates(_, ref) {
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 16, background: 'rgba(201,169,110,0.05)', borderRadius: 14, border: '1px solid rgba(201,169,110,0.12)' }}>
         <Info size={16} style={{ color: '#C9A96E', flexShrink: 0, marginTop: 1 }} />
         <p style={{ fontSize: 13, color: 'rgba(148,163,184,0.75)', lineHeight: 1.6, fontWeight: 500 }}>
-          No te preocupes si no tenés fechas exactas. Nuestros asesores te ayudarán a encontrar las mejores opciones y precios.
+          No te preocupes si no tenés fechas exactas. Nuestros asesores te ayudarán a encontrar las mejores opciones para hacer tus sueños realidad.
         </p>
       </div>
     </div>

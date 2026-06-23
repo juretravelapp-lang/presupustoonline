@@ -118,6 +118,9 @@ export function WizardShell() {
 
       const authUser = useAuthStore.getState().user
       const isOperatorMode = !!authUser
+      
+      const ticket = 'JT-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000).toString()
+      useWizardStore.getState().setGeneratedTicket(ticket)
 
       const quoteData: InsertQuote = {
         nombre: data.personal.nombre,
@@ -139,6 +142,7 @@ export function WizardShell() {
         adultos: data.passengers.adultos,
         ninos_2_12: data.passengers.ninos_2_12,
         bebes_0_2: data.passengers.bebes_0_2,
+        edades_adultos: data.passengers.edades_adultos || null,
         preferencias: data.preferences.preferencias,
         comentarios: data.comments.comentarios || null,
         tipo_viaje: data.comments.tipo_viaje || null,
@@ -147,6 +151,7 @@ export function WizardShell() {
         estado: 'no_cotizado',
         whatsapp_enviado: false,
         whatsapp_mensaje: null,
+        ticket_id: ticket,
         creador_email: isOperatorMode ? authUser.email : null,
         operador_nombre: isOperatorMode ? authUser.nombre : null,
       }

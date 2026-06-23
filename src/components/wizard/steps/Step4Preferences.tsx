@@ -42,12 +42,9 @@ export const Step4Preferences = forwardRef<StepHandle>(function Step4Preferences
             lineHeight: 1.1,
           }}
         >
-          ¿Qué incluimos?
+          Seleccioná los servicios que necesitás
         </h2>
         <div className="gold-divider" style={{ margin: '20px 0 16px' }} />
-        <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.9)', fontWeight: 500, lineHeight: 1.6, maxWidth: 480 }}>
-          Seleccioná los servicios que necesitás
-        </p>
       </motion.div>
 
       {/* Options */}

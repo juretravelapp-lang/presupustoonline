@@ -112,7 +112,7 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
           lineHeight: 1.15,
           marginBottom: 6,
         }}>
-          ¿Hacia dónde viajamos?
+          Escribí tu destino soñado
         </h2>
         <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.8)', fontWeight: 500 }}>
           Escribí tu destino o elegí uno popular
@@ -139,7 +139,7 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
           <Search size={20} style={{ color: 'rgba(148,163,184,0.5)', flexShrink: 0 }} />
           <input
             type="text"
-            placeholder="Ej: Madrid, Tokio, Bariloche..."
+            placeholder="Ejemplo: Cancún, Punta Cana, Disney, Europa..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addFromSearch() } }}

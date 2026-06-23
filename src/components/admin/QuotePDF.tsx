@@ -153,17 +153,16 @@ const styles = StyleSheet.create({
 
 interface QuotePDFProps {
   quote: TravelQuoteRow;
-  selectedProvider: { precio_final: number; nombre: string };
+  pricing: import('@/lib/supabase').PricingDetalles;
+  precioFinal: number;
 }
 
-export const QuotePDF: React.FC<QuotePDFProps> = ({ quote, selectedProvider }) => {
-  const symbol = quote.pricing_detalles?.moneda === 'USD' ? 'USD $' : 'ARS $';
+export const QuotePDF: React.FC<QuotePDFProps> = ({ quote, pricing, precioFinal }) => {
+  const symbol = pricing.moneda === 'USD' ? 'USD $' : 'ARS $';
   
   const allDestinos = [...quote.destinos, ...(quote.destino_personalizado ? quote.destino_personalizado.split(',') : [])];
   const destinationsText = allDestinos.map(d => d.trim().replace(/_/g, ' ')).join(', ');
   
-  const preferencesText = quote.preferencias.map(p => p.toUpperCase().replace(/_/g, ' ')).join(' | ');
-
   const dateText = quote.tipo_fecha === 'exacta' 
     ? `${quote.fecha_salida ? formatDate(quote.fecha_salida) : '—'} al ${quote.fecha_regreso ? formatDate(quote.fecha_regreso) : '—'}`
     : quote.mes_preferido || '—';
@@ -179,7 +178,7 @@ export const QuotePDF: React.FC<QuotePDFProps> = ({ quote, selectedProvider }) =
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.headerInfo}>Fecha: {new Date().toLocaleDateString()}</Text>
-            <Text style={styles.headerInfo}>Nº Referencia: #{quote.id.substring(0, 8).toUpperCase()}</Text>
+            <Text style={styles.headerInfo}>Nº Referencia: {quote.ticket_id ? quote.ticket_id : `#${quote.id.substring(0, 8).toUpperCase()}`}</Text>
           </View>
         </View>
 
@@ -221,14 +220,23 @@ export const QuotePDF: React.FC<QuotePDFProps> = ({ quote, selectedProvider }) =
           </View>
           <View style={styles.gridRow}>
             <Text style={styles.gridLabel}>Pasajeros</Text>
-            <Text style={styles.gridValue}>{quote.adultos} Adultos | {quote.ninos_2_12} Niños | {quote.bebes_0_2} Bebés</Text>
+            <Text style={styles.gridValue}>{quote.adultos} Adultos {quote.edades_adultos ? `(Edades: ${quote.edades_adultos}) ` : ''}| {quote.ninos_2_12} Niños | {quote.bebes_0_2} Bebés</Text>
           </View>
         </View>
 
         {/* Servicios Incluidos */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>✨ Servicios Incluidos</Text>
-          <Text style={styles.preferencesText}>{preferencesText}</Text>
+          {pricing.servicios && pricing.servicios.length > 0 ? (
+            pricing.servicios.map(serv => (
+              <View key={serv.id} style={styles.gridRow}>
+                <Text style={styles.gridLabel}>{serv.tipo}</Text>
+                <Text style={styles.gridValue}>{serv.descripcion || 'Sin descripción detallada'}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.preferencesText}>No se detallaron servicios específicos.</Text>
+          )}
         </View>
 
         {/* Observaciones */}
@@ -244,7 +252,7 @@ export const QuotePDF: React.FC<QuotePDFProps> = ({ quote, selectedProvider }) =
         {/* Precio Final */}
         <View style={styles.priceBox}>
           <Text style={styles.priceTitle}>Importe Final Presupuestado</Text>
-          <Text style={styles.priceValue}>{symbol}{selectedProvider.precio_final.toLocaleString()}</Text>
+          <Text style={styles.priceValue}>{symbol}{precioFinal.toLocaleString()}</Text>
           <Text style={styles.priceDisclaimer}>Precios vigentes al día de la fecha. Sujeto a disponibilidad.</Text>
         </View>
 

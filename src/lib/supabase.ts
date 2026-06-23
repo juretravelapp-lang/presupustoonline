@@ -24,12 +24,37 @@ export interface ProveedorPrecio {
   precio_final: number
 }
 
+export interface ServicioPrecio {
+  id: string
+  tipo: string
+  ttoo?: string
+  descripcion: string
+  costo: number
+  fecha_vto_ttoo?: string
+  estado_pago?: 'pendiente' | 'pagado'
+}
+
+export interface CrmTTOO {
+  id: string
+  nombre: string
+  contacto: string | null
+  created_at: string
+}
+
+export interface CrmServicio {
+  id: string
+  nombre: string
+  descripcion: string | null
+  created_at: string
+}
+
 export interface PricingDetalles {
   moneda: 'ARS' | 'USD'
   markup_tipo: 'porcentaje' | 'fijo'
   markup_valor: number
-  proveedor_seleccionado: string | null
-  proveedores: ProveedorPrecio[]
+  proveedor_seleccionado?: string | null
+  proveedores?: ProveedorPrecio[]
+  servicios?: ServicioPrecio[]
 }
 
 export interface HistorialEstado {
@@ -59,6 +84,7 @@ export interface TravelQuoteRow {
   adultos: number
   ninos_2_12: number
   bebes_0_2: number
+  edades_adultos: string | null
   preferencias: string[]
   comentarios: string | null
   tipo_viaje: string | null
@@ -77,6 +103,7 @@ export interface TravelQuoteRow {
   dates?: {
     fechas_por_destino: Record<string, { fecha_salida: string; fecha_regreso: string }>
   } | null
+  ticket_id: string | null
   created_at: string
   updated_at: string
 }

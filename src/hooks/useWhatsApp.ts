@@ -5,6 +5,7 @@ import { useWizardStore } from '@/stores/wizardStore'
 
 export function useWhatsApp() {
   const data = useWizardStore((state) => state.data)
+  const ticket_id = useWizardStore((state) => state.generatedTicket)
 
   const buildQuoteData = useCallback((): QuoteData => {
     const destinosText = data.destination.destinos_seleccionados
@@ -30,10 +31,12 @@ export function useWhatsApp() {
       adultos: data.passengers.adultos,
       ninos_2_12: data.passengers.ninos_2_12,
       bebes_0_2: data.passengers.bebes_0_2,
+      edades_adultos: data.passengers.edades_adultos,
       preferencias: data.preferences.preferencias,
       comentarios: data.comments.comentarios,
+      ticket_id,
     }
-  }, [data])
+  }, [data, ticket_id])
 
   const sendWhatsApp = useCallback(() => {
     const quoteData = buildQuoteData()
