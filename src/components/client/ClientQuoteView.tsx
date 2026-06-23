@@ -264,9 +264,9 @@ export function ClientQuoteView() {
           transition={{ delay: 0.35 }}
           className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-5"
         >
-          {selectedProvider && (
+          {selectedProvider && pricing && (
             <PDFDownloadLink
-              document={<QuotePDF quote={quote} selectedProvider={selectedProvider} />}
+              document={<QuotePDF quote={quote} pricing={pricing} precioFinal={selectedProvider.precio_final} />}
               fileName={`Presupuesto_Jure_Travel_${quote.nombre}_${quote.apellido}.pdf`}
               className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white font-bold py-4 px-8 rounded-xl border border-white/10 transition-all flex items-center justify-center gap-2 backdrop-blur-sm hover:border-gold-border text-sm"
             >

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuotesList, queryKeys } from '@/hooks/useQuotesQuery'
-import { CalendarDays, DollarSign, Loader2, ChevronDown, ChevronRight, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
+import { DollarSign, Loader2, ChevronDown, ChevronRight, CheckCircle2, AlertCircle, Clock } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { updateQuoteDetails } from '@/lib/supabase'

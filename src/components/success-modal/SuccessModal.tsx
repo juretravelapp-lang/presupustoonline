@@ -3,7 +3,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useWizardStore } from '@/stores/wizardStore'
 import { useWhatsApp } from '@/hooks/useWhatsApp'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, RotateCcw } from 'lucide-react'
+import { X } from 'lucide-react'
 
 /* ── Confetti particle ───────────────────────────────────────────── */
 const CONFETTI_COLORS = ['#F59E0B', '#FBBF24', '#34D399', '#60A5FA', '#F472B6', '#A78BFA', '#FB923C']
@@ -122,7 +122,6 @@ function AirplaneLiftoff({ started }: { started: boolean }) {
 
 export function SuccessModal() {
   const { activeModal, closeModal } = useUIStore()
-  const { reset }                   = useWizardStore()
   const { sendWhatsApp }            = useWhatsApp()
   const isOpen   = activeModal === 'success'
   const [animStarted, setAnimStarted] = useState(false)
@@ -140,8 +139,6 @@ export function SuccessModal() {
       setShowConfetti(false)
     }
   }, [isOpen])
-
-  const handleNewQuote = () => { reset(); closeModal() }
 
   return (
     <AnimatePresence>
