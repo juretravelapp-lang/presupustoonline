@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { updateQuoteDetails, getMeetingsForQuote, deleteMeeting, type TravelQuoteRow, type PricingDetalles, type CrmMeeting } from '@/lib/supabase'
 import { MeetingFormModal } from './MeetingFormModal'
+import { QuoteCotizacionTab } from './QuoteCotizacionTab'
+import { QuotePagosTab } from './QuotePagosTab'
 import { useTTOOList, useServiciosList } from '@/hooks/useCatalogQuery'
-import { X, Calendar, DollarSign, FileText, Printer, Save, Clock, Plus, Trash2, MapPin, Video, Phone, Loader2 } from 'lucide-react'
+import { X, Calendar, DollarSign, FileText, Printer, Save, Clock, Plus, Trash2, MapPin, Video, Phone, Loader2, ClipboardList, CreditCard } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { QuotePDF } from './QuotePDF'
@@ -13,7 +15,7 @@ interface ModalProps {
   onStatusChange: (status: TravelQuoteRow['estado']) => void
 }
 
-type TabType = 'general' | 'agenda' | 'pricing'
+type TabType = 'general' | 'agenda' | 'cotizacion' | 'pagos' | 'pricing'
 
 export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChange }: ModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('general')
@@ -105,8 +107,8 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
             if (winner.otros_costo) p.servicios.push({ id: crypto.randomUUID(), tipo: 'Otro', descripcion: `Otros - ${winner.nombre}`, costo: winner.otros_costo, fecha_vto_ttoo: '' })
          }
       }
-      p.markup_valor = 20
-      p.markup_tipo = 'porcentaje'
+      p.markup_valor = p.markup_valor ?? 20
+      p.markup_tipo = p.markup_tipo || 'porcentaje'
       return p
     }
     return {
@@ -174,7 +176,7 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
     try {
       const updatedPricing: PricingDetalles = {
         ...pricing,
-        markup_valor: 20,
+        markup_valor: pricing.markup_valor ?? 20,
         markup_tipo: 'porcentaje'
       }
 
@@ -249,6 +251,8 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
           {([
             { id: 'general', label: 'Detalles del Viaje', icon: FileText },
             { id: 'agenda',  label: 'Cita y Agenda CRM', icon: Calendar },
+            { id: 'cotizacion', label: 'Detalle de Cotización', icon: ClipboardList },
+            { id: 'pagos', label: 'Pagos', icon: CreditCard },
             { id: 'pricing', label: 'Calculadora Precios', icon: DollarSign },
           ] as const).map(tab => {
             const isActive = activeTab === tab.id
@@ -552,6 +556,16 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
             </div>
           )}
 
+          {/* ─── TAB 4: Detalle de Cotización ─────────────────────── */}
+          {activeTab === 'cotizacion' && (
+            <QuoteCotizacionTab quote={quote} />
+          )}
+
+          {/* ─── TAB 5: Pagos ─────────────────────────────────────── */}
+          {activeTab === 'pagos' && (
+            <QuotePagosTab quote={quote} />
+          )}
+
           {/* ─── TAB 3: Pricing Calculator ────────────────────────── */}
           {activeTab === 'pricing' && (
             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -570,10 +584,25 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
                   </select>
                 </div>
                 <div>
-                  <label className="input-label">Margen de Ganancia (Fijo)</label>
-                  <div style={{ height: 42, display: 'flex', alignItems: 'center', padding: '0 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, color: 'rgba(148,163,184,0.7)', fontSize: 13 }}>
-                    20% (Porcentaje)
+                  <label className="input-label">Margen de Ganancia (%)</label>
+                  <div style={{ position: 'relative', height: 42 }}>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={pricing.markup_valor}
+                      onChange={e => {
+                        const v = Math.max(0, Math.min(100, Number(e.target.value)))
+                        setPricing(p => ({ ...p, markup_valor: v }))
+                      }}
+                      className="input-dark"
+                      style={{ height: 42, minHeight: 42, paddingRight: 30 }}
+                    />
+                    <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: 'rgba(148,163,184,0.7)', fontWeight: 700 }}>%</span>
                   </div>
+                  <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.5)', marginTop: 2, display: 'block' }}>
+                    Porcentaje a cobrar de ganancia (0 a 100)
+                  </span>
                 </div>
               </div>
 
@@ -725,7 +754,7 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
               {/* Price outputs calculations */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, color: 'rgba(148,163,184,0.8)', fontWeight: 600, marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 14 }}>
                 <span>Costo Total: {pricing.moneda} ${totalCosto.toLocaleString()}</span>
-                <span>Markup (20%): {pricing.moneda} ${totalMarkup.toLocaleString()}</span>
+                <span>Markup ({pricing.markup_valor || 0}%): {pricing.moneda} ${totalMarkup.toLocaleString()}</span>
                 <span style={{ color: '#FBBF24', fontWeight: 800, fontSize: 14, background: 'rgba(245,158,11,0.1)', padding: '4px 12px', borderRadius: 8 }}>
                   Precio Final: {pricing.moneda} ${precioFinal.toLocaleString()}
                 </span>

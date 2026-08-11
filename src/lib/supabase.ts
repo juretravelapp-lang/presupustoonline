@@ -75,6 +75,45 @@ export interface HistorialEstado {
   usuario: string
 }
 
+export interface PasajeroDetalle {
+  nombre: string
+  apellido?: string
+  dni?: string
+  pasaporte?: string
+  fecha_nacimiento?: string
+  edad?: string
+  observaciones?: string
+  pedidos_especiales?: string
+}
+
+export interface CotizacionDetalles {
+  observaciones?: string
+  pasajeros?: PasajeroDetalle[]
+}
+
+export interface CrmPago {
+  id: string
+  quote_id: string
+  cliente_id: string | null
+  ticket_id: string | null
+  cliente_nombre: string | null
+  concepto: string
+  moneda: 'ARS' | 'USD'
+  monto: number
+  forma_pago: string | null
+  fecha_pago: string | null
+  fecha_vencimiento: string | null
+  estado: 'pendiente' | 'pagado' | 'cancelado'
+  es_cuota: boolean
+  cuota_numero: number | null
+  cuota_total: number | null
+  notas: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type InsertPago = Omit<CrmPago, 'id' | 'created_at' | 'updated_at'>
+
 export interface TravelQuoteRow {
   id: string
   nombre: string
@@ -116,6 +155,8 @@ export interface TravelQuoteRow {
     fechas_por_destino: Record<string, { fecha_salida: string; fecha_regreso: string }>
   } | null
   ticket_id: string | null
+  cliente_id?: string | null
+  cotizacion_detalles?: CotizacionDetalles | null
   created_at: string
   updated_at: string
 }
@@ -826,4 +867,67 @@ export async function syncClientesFromQuotes(): Promise<{ creados: number; vincu
   }
 
   return { creados, vinculados }
+}
+
+// =============================================
+// Pagos CRUD (crm_pagos) — historial y cuotas por cotización
+// =============================================
+
+function mapPago(p: CrmPago): CrmPago {
+  return { ...p, monto: Number(p.monto) }
+}
+
+export async function getPagos() {
+  const { data, error } = await supabase
+    .from('crm_pagos')
+    .select('*')
+    .order('fecha_vencimiento', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return (data as CrmPago[]).map(mapPago)
+}
+
+export async function getPagosByQuote(quoteId: string) {
+  const { data, error } = await supabase
+    .from('crm_pagos')
+    .select('*')
+    .eq('quote_id', quoteId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return (data as CrmPago[]).map(mapPago)
+}
+
+export async function crearPago(data: InsertPago) {
+  const { data: row, error } = await supabase
+    .from('crm_pagos')
+    .insert({ ...data, monto: Number(data.monto) })
+    .select()
+    .single()
+
+  if (error) throw error
+  return mapPago(row as CrmPago)
+}
+
+export async function updatePago(id: string, updates: Partial<InsertPago>) {
+  const { data: row, error } = await supabase
+    .from('crm_pagos')
+    .update({ ...updates, monto: updates.monto !== undefined ? Number(updates.monto) : undefined })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return mapPago(row as CrmPago)
+}
+
+export async function deletePago(id: string) {
+  const { error } = await supabase
+    .from('crm_pagos')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return true
 }

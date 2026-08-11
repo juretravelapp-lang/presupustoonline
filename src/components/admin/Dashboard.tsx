@@ -10,6 +10,7 @@ import { LeadsDataTable } from './metrics/LeadsDataTable'
 import { TTOOBoard } from './TTOOBoard'
 import { ServiciosBoard } from './ServiciosBoard'
 import { TTOOVencimientosBoard } from './TTOOVencimientosBoard'
+import { PagosBoard } from './PagosBoard'
 import { QuoteDetailModal } from './QuoteDetailModal'
 import { ClientesBoard } from './ClientesBoard'
 import { DestinosBoard } from './DestinosBoard'
@@ -37,9 +38,10 @@ import {
   MessageCircleMore,
   MessageSquareText,
   Globe,
+  CreditCard,
 } from 'lucide-react'
 
-type AdminView = 'metrics' | 'kanban' | 'meetings' | 'operator_wizard' | 'ttoo' | 'servicios_cat' | 'destinos_cat' | 'vencimientos_ttoo' | 'clientes' | 'message_templates' | 'message_generator'
+type AdminView = 'metrics' | 'kanban' | 'meetings' | 'operator_wizard' | 'ttoo' | 'servicios_cat' | 'destinos_cat' | 'vencimientos_ttoo' | 'clientes' | 'message_templates' | 'message_generator' | 'pagos'
 
 export function Dashboard() {
   const { user, logout } = useAuthStore()
@@ -234,6 +236,15 @@ export function Dashboard() {
                 >
                   <Wallet size={18} />
                   <span>Vencimientos TTOO</span>
+                </button>
+
+                <button
+                  onClick={() => handleViewChange('pagos')}
+                  className={`option-chip ${activeView === 'pagos' ? 'selected' : ''}`}
+                  style={{ height: 48, padding: '0 14px' }}
+                >
+                  <CreditCard size={18} />
+                  <span>Estados de Pagos</span>
                 </button>
               </>
             )}
@@ -473,6 +484,10 @@ export function Dashboard() {
 
         {activeView === 'vencimientos_ttoo' && user?.role === 'admin' && (
           <TTOOVencimientosBoard />
+        )}
+
+        {activeView === 'pagos' && user?.role === 'admin' && (
+          <PagosBoard />
         )}
       </main>
     </div>
