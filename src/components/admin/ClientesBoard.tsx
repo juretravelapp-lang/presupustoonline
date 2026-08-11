@@ -5,27 +5,60 @@ import {
   useSyncClientes,
 } from '@/hooks/useClientesQuery'
 import {
-  Plus, X, User, Users, Phone, Pencil, Trash2, Mail, Loader2, RefreshCw,
+  Plus, X, User, Users, Phone, Pencil, Trash2, Mail, Loader2, RefreshCw, IdCard,
 } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { ClienteDetail } from './ClienteDetail'
 import { ClienteFormModal } from './ClienteFormModal'
+
+const FILTERS = [
+  { id: 'all', label: 'Todos', icon: Users },
+  { id: 'nombre', label: 'Nombre', icon: User },
+  { id: 'apellido', label: 'Apellido', icon: User },
+  { id: 'dni', label: 'DNI', icon: IdCard },
+  { id: 'celular', label: 'Celular', icon: Phone },
+  { id: 'email', label: 'Email', icon: Mail },
+] as const
+
+type FilterId = (typeof FILTERS)[number]['id']
+
+const PLACEHOLDER: Record<FilterId, string> = {
+  all: 'Buscar por nombre, apellido, DNI, celular o email...',
+  nombre: 'Buscar por nombre...',
+  apellido: 'Buscar por apellido...',
+  dni: 'Buscar por DNI (ej: 40437410)...',
+  celular: 'Buscar por celular...',
+  email: 'Buscar por email...',
+}
+
+const cleanDigits = (v: string) => v.replace(/\D/g, '')
 
 export function ClientesBoard() {
   const { data: clientes, isLoading, refetch } = useClientes()
   const deleteMutation = useDeleteCliente()
   const syncMutation = useSyncClientes()
 
+  const [filterField, setFilterField] = useState<FilterId>('all')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Cliente | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Cliente | null>(null)
 
   const filtered = (clientes || []).filter(c => {
-    if (!search.trim()) return true
     const q = search.trim().toLowerCase()
-    return `${c.nombre} ${c.apellido} ${c.dni || ''} ${c.celular || ''} ${c.email || ''}`.toLowerCase().includes(q)
+    if (!q) return true
+    switch (filterField) {
+      case 'nombre': return c.nombre.toLowerCase().includes(q)
+      case 'apellido': return (c.apellido || '').toLowerCase().includes(q)
+      case 'dni': return cleanDigits(c.dni || '').includes(cleanDigits(q))
+      case 'celular': return cleanDigits(c.celular || '').includes(cleanDigits(q))
+      case 'email': return (c.email || '').toLowerCase().includes(q)
+      default:
+        return `${c.nombre} ${c.apellido || ''} ${c.dni || ''} ${c.celular || ''} ${c.email || ''}`.toLowerCase().includes(q)
+    }
   })
+
+  const FilterIcon = FILTERS.find(f => f.id === filterField)?.icon || Users
 
   const openNew = () => { setEditing(null); setShowForm(true) }
   const openEdit = (c: Cliente) => { setSelected(null); setEditing(c); setShowForm(true) }
@@ -62,7 +95,7 @@ export function ClientesBoard() {
             <Users size={24} className="text-gold" /> Clientes
           </h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            Ficha maestra por persona. Buscalo por nombre o DNI y obtené sus datos, familia y histórico de viajes.
+            Ficha maestra por persona. Filtrá por nombre, DNI, celular o email y obtené sus datos, familia y histórico de viajes.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -82,33 +115,63 @@ export function ClientesBoard() {
         </div>
       </div>
 
-      {/* Search + refresh */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 260px', minWidth: 200, position: 'relative' }}>
-          <User size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--text-muted)' }} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por nombre, apellido o DNI..."
-            style={{
-              width: '100%', height: 42, paddingLeft: 36, paddingRight: 30, borderRadius: 10,
-              background: 'var(--surface-2)', border: '1.5px solid var(--surface-3)',
-              color: 'var(--ink)', fontSize: 13, outline: 'none',
-            }}
-          />
-          {search && (
-            <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 8, top: 11, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-              <X size={15} />
-            </button>
+      {/* Filters + search */}
+      <div className="glass-card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {FILTERS.map((f) => {
+            const active = filterField === f.id
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFilterField(f.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px', borderRadius: 99, cursor: 'pointer',
+                  fontSize: 12, fontWeight: 700,
+                  background: active ? 'rgba(245,158,11,0.14)' : 'var(--surface-2)',
+                  border: active ? '1.5px solid rgba(245,158,11,0.45)' : '1.5px solid var(--surface-3)',
+                  color: active ? '#FBBF24' : 'var(--text-muted)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <f.icon size={13} /> {f.label}
+              </button>
+            )
+          })}
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 260px', minWidth: 200, position: 'relative' }}>
+            <FilterIcon size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--text-muted)' }} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={PLACEHOLDER[filterField]}
+              style={{
+                width: '100%', height: 42, paddingLeft: 36, paddingRight: 30, borderRadius: 10,
+                background: 'var(--surface-2)', border: '1.5px solid var(--surface-3)',
+                color: 'var(--ink)', fontSize: 13, outline: 'none',
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 8, top: 11, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={15} />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => refetch()}
+            style={{ width: 42, height: 42, borderRadius: 10, border: '1.5px solid var(--surface-3)', background: 'var(--surface-2)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            title="Refrescar"
+          >
+            <Loader2 size={16} className={isLoading ? 'animate-spin' : ''} />
+          </button>
+          {search.trim() && (
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              {filtered.length} resultado{filtered.length !== 1 ? 's' : ''}
+            </span>
           )}
         </div>
-        <button
-          onClick={() => refetch()}
-          style={{ width: 42, height: 42, borderRadius: 10, border: '1.5px solid var(--surface-3)', background: 'var(--surface-2)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          title="Refrescar"
-        >
-          <Loader2 size={16} className={isLoading ? 'animate-spin' : ''} />
-        </button>
       </div>
 
       {/* List */}
