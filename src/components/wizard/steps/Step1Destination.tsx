@@ -1,19 +1,18 @@
 import { useState, forwardRef, useImperativeHandle } from 'react'
 import { useWizardStore } from '@/stores/wizardStore'
 import { DESTINOS_POPULARES } from '@/lib/constants'
-import { Search, X, Plus, Trash2, MapPin } from 'lucide-react'
+import { MapPin, Navigation, Check } from 'lucide-react'
 import type { StepHandle } from '../WizardShell'
 import { motion, AnimatePresence } from 'motion/react'
 
 export const Step1Destination = forwardRef<StepHandle>(function Step1Destination(_, ref) {
   const { data, updateData, markStepCompleted } = useWizardStore()
 
+  const [origin, setOrigin] = useState(data.origin.ciudad_salida || '')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string[]>(data.destination.destinos_seleccionados)
-  const [customList, setCustomList] = useState<string[]>(data.destination.destinos_custom)
+  const [customList] = useState<string[]>(data.destination.destinos_custom)
   const [showError, setShowError] = useState(false)
-
-  const allDestinos = [...selected, ...customList]
 
   const toggleDestino = (value: string) => {
     setShowError(false)
@@ -21,30 +20,6 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
       prev.includes(value) ? prev.filter(d => d !== value) : [...prev, value]
     )
   }
-
-  const addFromSearch = () => {
-    const trimmed = search.trim()
-    if (!trimmed) return
-
-    const matchedPopular = DESTINOS_POPULARES.find(
-      d => d.label.toLowerCase() === trimmed.toLowerCase()
-    )
-
-    if (matchedPopular) {
-      if (!selected.includes(matchedPopular.value)) {
-        toggleDestino(matchedPopular.value)
-      }
-    } else {
-      if (!customList.includes(trimmed)) {
-        setCustomList(prev => [...prev, trimmed])
-      }
-    }
-    setSearch('')
-    setShowError(false)
-  }
-
-  const removeCustom = (val: string) =>
-    setCustomList(prev => prev.filter(d => d !== val))
 
   useImperativeHandle(ref, () => ({
     validate: async () => {
@@ -69,7 +44,6 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
             finalCustomList.push(trimmedSearch)
           }
         }
-        setSearch('')
       }
 
       const all = [...finalSelected, ...finalCustomList]
@@ -78,6 +52,7 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
         return false
       }
 
+      updateData('origin', { ciudad_salida: origin })
       updateData('destination', {
         destinos_seleccionados: finalSelected,
         destinos_custom: finalCustomList,
@@ -89,85 +64,61 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
     },
   }))
 
-  const trimmedSearch = search.trim()
-  const popularItem = trimmedSearch ? DESTINOS_POPULARES.find(p => p.label.toLowerCase() === trimmedSearch.toLowerCase()) : null
-  const isSelectedPopular = popularItem ? selected.includes(popularItem.value) : false
-  const isCustom = customList.some(c => c.toLowerCase() === trimmedSearch.toLowerCase())
-  const alreadyAdded = isSelectedPopular || isCustom
-
   return (
-    <div className="flex flex-col" style={{ gap: 28 }}>
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <h2 style={{
-          fontSize: 'clamp(24px, 5vw, 32px)',
-          fontWeight: 700,
-          fontFamily: 'var(--font-serif)',
-          color: '#F0F4FF',
-          letterSpacing: '-0.02em',
-          lineHeight: 1.15,
-          marginBottom: 6,
-        }}>
-          Escribí tu destino soñado
-        </h2>
-        <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.8)', fontWeight: 500 }}>
-          Escribí tu destino o elegí uno popular
-        </p>
-      </motion.div>
-
-      {/* Search */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.3 }}
-      >
+    <div className="flex flex-col" style={{ gap: 32 }}>
+      {/* Inputs Section */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Origin Input */}
         <div style={{
-          display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
-          background: 'rgba(255,255,255,0.04)',
-          border: '1.5px solid rgba(255,255,255,0.08)',
-          borderRadius: 14,
-          padding: '4px 4px 4px 18px',
-          transition: 'border-color 0.2s',
-        }}
-          onFocusCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(201,169,110,0.4)' }}
-          onBlurCapture={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)' }}
-        >
-          <Search size={20} style={{ color: 'rgba(148,163,184,0.5)', flexShrink: 0 }} />
-          <input
-            type="text"
-            placeholder="Ejemplo: Cancún, Punta Cana, Disney, Europa..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addFromSearch() } }}
-            style={{
-              flex: 1, minWidth: 140, background: 'transparent', border: 'none', outline: 'none',
-              color: '#F0F4FF', fontSize: 15, fontWeight: 500, padding: '14px 8px',
-              fontFamily: 'var(--font-sans)',
-            }}
-          />
-          {search && (
-            <button onClick={() => setSearch('')} style={{ padding: 6, color: 'rgba(148,163,184,0.5)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex' }}>
-              <X size={18} />
-            </button>
-          )}
-          <button
-            onClick={addFromSearch}
-            disabled={!search.trim() || alreadyAdded}
-            style={{
-              padding: '10px 20px', borderRadius: 10, border: 'none',
-              fontWeight: 700, fontSize: 13, cursor: !search.trim() || alreadyAdded ? 'not-allowed' : 'pointer',
-              background: !search.trim() || alreadyAdded ? 'rgba(255,255,255,0.05)' : '#C9A96E',
-              color: !search.trim() || alreadyAdded ? 'rgba(148,163,184,0.4)' : '#0A1526',
-              transition: 'all 0.15s', whiteSpace: 'nowrap', flexShrink: 0,
-              fontFamily: 'var(--font-sans)',
-            }}
-          >
-            {alreadyAdded ? '✓ Agregado' : 'Agregar'}
-          </button>
+          display: 'flex', alignItems: 'center', gap: 16,
+          background: '#162032',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 16,
+          padding: '16px 20px',
+        }}>
+          <Navigation size={24} style={{ color: '#D4B87A', flexShrink: 0 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, fontWeight: 700, color: '#D4B87A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ¿De qué ciudad salís?
+            </label>
+            <input
+              type="text"
+              placeholder="Ej. TUCUMAN"
+              value={origin}
+              onChange={e => setOrigin(e.target.value)}
+              style={{
+                background: 'transparent', border: 'none', outline: 'none',
+                color: '#fff', fontSize: 16, fontWeight: 700, width: '100%',
+                textTransform: 'uppercase'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Destination Input */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 16,
+          background: '#162032',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 16,
+          padding: '16px 20px',
+        }}>
+          <MapPin size={24} style={{ color: '#D4B87A', flexShrink: 0 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, fontWeight: 700, color: '#D4B87A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ¿A dónde viajás?
+            </label>
+            <input
+              type="text"
+              placeholder="Escribí tu destino (ej. Cancún, Europa)"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                background: 'transparent', border: 'none', outline: 'none',
+                color: '#fff', fontSize: 16, fontWeight: 500, width: '100%',
+              }}
+            />
+          </div>
         </div>
 
         <AnimatePresence>
@@ -176,121 +127,62 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
               initial={{ opacity: 0, y: -4, height: 0 }}
               animate={{ opacity: 1, y: 0, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              style={{ fontSize: 12, color: '#F87171', fontWeight: 600, marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}
+              style={{ fontSize: 13, color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              <X size={12} strokeWidth={3} />
-              Agregá al menos un destino para continuar
+              Debés ingresar o seleccionar un destino
             </motion.p>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
 
-      {/* Selected destinations */}
-      <AnimatePresence>
-        {allDestinos.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <MapPin size={16} style={{ color: '#C9A96E' }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(148,163,184,0.9)' }}>
-                Destinos seleccionados <span style={{ color: '#C9A96E' }}>({allDestinos.length})</span>
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {allDestinos.map((value, idx) => {
-                const isPopular = selected.includes(value)
-                const dest = isPopular ? DESTINOS_POPULARES.find(d => d.value === value) : null
-                const label = dest?.label || value
-                const emoji = dest?.emoji || '📍'
-
-                return (
-                  <motion.div
-                    key={value}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 8, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 16px',
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      borderRadius: 12,
-                    }}
-                  >
-                    <span style={{
-                      width: 28, height: 28, borderRadius: '50%',
-                      background: 'rgba(201,169,110,0.1)',
-                      color: '#C9A96E', fontWeight: 700, fontSize: 12,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
-                      {idx + 1}
-                    </span>
-                    <span style={{ flex: 1, fontWeight: 600, fontSize: 14, color: '#F0F4FF' }}>
-                      {emoji} {label}
-                    </span>
-                    <button
-                      onClick={() => isPopular ? toggleDestino(value) : removeCustom(value)}
-                      style={{
-                        padding: 6, background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'rgba(148,163,184,0.4)', borderRadius: 6, display: 'flex',
-                        transition: 'color 0.15s',
-                      }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#F87171' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(148,163,184,0.4)' }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Popular destinations */}
+      {/* Popular Destinations Grid */}
       <div>
-        <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(148,163,184,0.5)', marginBottom: 10 }}>
-          Destinos populares
+        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 8 }}>
+          Destinos más buscados
+        </h3>
+        <p style={{ fontSize: 14, color: '#7a859b', marginBottom: 20, lineHeight: 1.5 }}>
+          Podés escribir tu destino arriba o seleccionar uno (o varios) de los siguientes destinos populares:
         </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {DESTINOS_POPULARES.map(destino => {
             const isSelected = selected.includes(destino.value)
-            if (isSelected) return null
 
             return (
               <button
                 key={destino.value}
                 onClick={() => toggleDestino(destino.value)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '8px 14px', borderRadius: 999,
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  background: 'rgba(255,255,255,0.03)',
-                  color: 'rgba(148,163,184,0.8)',
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  fontFamily: 'var(--font-sans)',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'rgba(201,169,110,0.3)'
-                  e.currentTarget.style.background = 'rgba(201,169,110,0.06)'
-                  e.currentTarget.style.color = '#F0F4FF'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                  e.currentTarget.style.color = 'rgba(148,163,184,0.8)'
+                  position: 'relative',
+                  display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start',
+                  padding: '16px', borderRadius: 16,
+                  border: isSelected ? '1px solid #34D399' : '1px solid rgba(255,255,255,0.05)',
+                  background: isSelected ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.02)',
+                  boxShadow: isSelected ? '0 0 20px rgba(52,211,153,0.12)' : 'none',
+                  cursor: 'pointer', transition: 'all 0.2s',
+                  textAlign: 'left'
                 }}
               >
-                <span style={{ fontSize: 16 }}>{destino.emoji}</span>
-                {destino.label}
-                <Plus size={14} style={{ color: 'rgba(148,163,184,0.3)' }} />
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.span
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+                      style={{
+                        position: 'absolute', top: 12, right: 12,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 22, height: 22, borderRadius: '50%',
+                        background: '#34D399', color: '#0A1526',
+                      }}
+                    >
+                      <Check size={14} strokeWidth={3.5} />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+                <span style={{ fontSize: 24 }}>{destino.emoji}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: isSelected ? '#6EE7B7' : '#fff' }}>{destino.label}</span>
               </button>
             )
           })}
@@ -299,3 +191,4 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
     </div>
   )
 })
+

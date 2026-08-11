@@ -1,14 +1,13 @@
 import { forwardRef, useImperativeHandle } from 'react'
 import { useWizardStore } from '@/stores/wizardStore'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import type { StepHandle } from '../WizardShell'
+import { User, Baby, Users } from 'lucide-react'
 
 interface CounterProps {
   label: string
-  emoji: string
+  icon: React.ReactNode
   ageRange: string
-  badge?: string
-  badgeColor?: string
   value: number
   min: number
   max: number
@@ -16,7 +15,7 @@ interface CounterProps {
   delay?: number
 }
 
-function Counter({ label, emoji, ageRange, badge, badgeColor, value, min, max, onChange, delay = 0 }: CounterProps) {
+function Counter({ label, icon, ageRange, value, min, max, onChange, delay = 0 }: CounterProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -26,72 +25,58 @@ function Counter({ label, emoji, ageRange, badge, badgeColor, value, min, max, o
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '16px 18px',
-        gap: 12,
-        background: 'rgba(255,255,255,0.04)',
-        border: '1.5px solid rgba(255,255,255,0.08)',
+        padding: '16px 20px',
+        background: '#162032',
+        border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: 16,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        {/* Icon bubble */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{
-          width: 48, height: 48,
-          borderRadius: 14,
-          background: 'rgba(201,169,110,0.1)',
-          border: '1.5px solid rgba(201,169,110,0.2)',
+          width: 48, height: 48, borderRadius: '50%',
+          background: 'rgba(212,184,122,0.1)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 22, flexShrink: 0,
+          color: '#D4B87A', flexShrink: 0,
         }}>
-          {emoji}
+          {icon}
         </div>
 
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-            <p style={{ fontSize: 16, fontWeight: 700, color: '#F0F4FF' }}>{label}</p>
-            {badge && (
-              <span style={{
-                fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 99,
-                background: badgeColor || 'rgba(52,211,153,0.12)',
-                color: badgeColor ? '#0A1526' : '#34D399',
-                border: `1px solid ${badgeColor ? 'transparent' : 'rgba(52,211,153,0.25)'}`,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-              }}>
-                {badge}
-              </span>
-            )}
-          </div>
-          <p style={{ fontSize: 11, color: 'rgba(100,116,139,0.8)', fontWeight: 500 }}>{ageRange}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{label}</p>
+          <p style={{ fontSize: 13, color: '#7a859b', fontWeight: 500 }}>{ageRange}</p>
         </div>
       </div>
 
       {/* Counter controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <button
           type="button"
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          className="counter-btn"
-          aria-label={`Reducir ${label}`}
+          style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontSize: 20, cursor: value <= min ? 'not-allowed' : 'pointer',
+            opacity: value <= min ? 0.5 : 1, transition: 'all 0.15s'
+          }}
         >
           −
         </button>
-        <motion.span
-          key={value}
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 600, damping: 22 }}
-          style={{ minWidth: 24, textAlign: 'center', fontSize: 22, fontWeight: 900, color: '#F0F4FF', fontVariantNumeric: 'tabular-nums' }}
-        >
+        <span style={{ minWidth: 20, textAlign: 'center', fontSize: 18, fontWeight: 700, color: '#fff' }}>
           {value}
-        </motion.span>
+        </span>
         <button
           type="button"
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
-          className="counter-btn"
-          aria-label={`Aumentar ${label}`}
+          style={{
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontSize: 20, cursor: value >= max ? 'not-allowed' : 'pointer',
+            opacity: value >= max ? 0.5 : 1, transition: 'all 0.15s'
+          }}
         >
           +
         </button>
@@ -115,125 +100,98 @@ export const Step3Passengers = forwardRef<StepHandle>(function Step3Passengers(_
   const total = data.passengers.adultos + data.passengers.ninos_2_12 + data.passengers.bebes_0_2
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <h2
-          style={{
-            fontSize: 'clamp(32px, 7vw, 52px)',
-            fontWeight: 700,
-            fontFamily: 'var(--font-serif)',
-            letterSpacing: '-0.03em',
-            color: '#F0F4FF',
-            lineHeight: 1.1,
-          }}
-        >
-          ¿Cuántos viajan?
-        </h2>
-        <div className="gold-divider" style={{ margin: '20px 0 16px' }} />
-        <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.85)', fontWeight: 500, lineHeight: 1.6, maxWidth: 480 }}>
-          Indicanos quiénes integran el grupo
-        </p>
-      </motion.div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* Counters */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
           <Counter
-            label="Adultos" emoji="🧑" ageRange="Desde 12 años"
+            label="Adultos" icon={<User size={24} />} ageRange="12+ años"
             value={data.passengers.adultos} min={1} max={20}
             onChange={val => updateData('passengers', { adultos: val })}
             delay={0.05}
           />
-          {data.passengers.adultos > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              style={{ marginTop: 12 }}
-            >
-              <label className="input-label" htmlFor="edades-adultos">Escribí las edades de los adultos (opcional)</label>
-              <input
-                id="edades-adultos"
-                type="text"
-                placeholder="Ejemplo: 35, 42, 28"
-                className="input-dark"
-                value={data.passengers.edades_adultos || ''}
-                onChange={e => updateData('passengers', { edades_adultos: e.target.value })}
-                style={{ width: '100%' }}
-              />
-            </motion.div>
-          )}
+          <AnimatePresence>
+            {data.passengers.adultos > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                style={{ marginTop: 16 }}
+              >
+                <div style={{ background: '#162032', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 20px' }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#D4B87A', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }} htmlFor="edades-adultos">
+                    EDADES (OPCIONAL) Ej: 35, 42, 28
+                  </label>
+                  <input
+                    id="edades-adultos"
+                    type="text"
+                    placeholder="Ejemplo: 35, 42, 28"
+                    value={data.passengers.edades_adultos || ''}
+                    onChange={e => updateData('passengers', { edades_adultos: e.target.value })}
+                    style={{ width: '100%', background: 'transparent', border: 'none', color: '#fff', fontSize: 15, fontWeight: 500, outline: 'none' }}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
         <Counter
-          label="Niños" emoji="👧" ageRange="De 2 a 11 años"
+          label="Niños" icon={<Users size={24} />} ageRange="2 a 11 años"
           value={data.passengers.ninos_2_12} min={0} max={15}
           onChange={val => updateData('passengers', { ninos_2_12: val })}
           delay={0.10}
         />
+        
         <Counter
-          label="Bebés" emoji="👶" ageRange="De 0 a 2 años"
+          label="Bebés" icon={<Baby size={24} />} ageRange="0 a 2 años"
           value={data.passengers.bebes_0_2} min={0} max={10}
           onChange={val => updateData('passengers', { bebes_0_2: val })}
           delay={0.15}
         />
       </div>
 
+      {/* Note */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 16, background: 'rgba(212,184,122,0.1)', borderRadius: 16, border: '1px solid rgba(212,184,122,0.2)' }}>
+        <span style={{ fontSize: 18, flexShrink: 0 }}>💡</span>
+        <p style={{ fontSize: 13, color: '#e6c886', lineHeight: 1.5, fontWeight: 500 }}>
+          <strong>Bebés GRATIS 0 a 2 años.</strong> Generalmente viajan gratis sin asiento. Consultá con tu asesor para más detalles.
+        </p>
+      </div>
+
       {/* Total summary card */}
       <motion.div
         layout
         style={{
-          padding: '20px 24px',
-          background: 'rgba(201,169,110,0.07)',
-          border: '1.5px solid rgba(201,169,110,0.2)',
-          borderRadius: 18,
+          padding: '24px',
+          background: '#0A1526',
+          border: '1px solid rgba(255,255,255,0.05)',
+          borderRadius: 20,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          marginTop: 8
         }}
       >
-        <div>
-          <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.7)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-            Total pasajeros
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <p style={{ fontSize: 12, color: '#7a859b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            TOTAL PASAJEROS
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {data.passengers.adultos > 0 && (
-              <span style={{ fontSize: 12, color: 'rgba(251,191,36,0.85)', fontWeight: 600 }}>
-                🧑 {data.passengers.adultos} Adult{data.passengers.adultos > 1 ? 'os' : 'o'}
-              </span>
-            )}
-            {data.passengers.ninos_2_12 > 0 && (
-              <span style={{ fontSize: 12, color: 'rgba(251,191,36,0.85)', fontWeight: 600 }}>
-                👧 {data.passengers.ninos_2_12} Niño{data.passengers.ninos_2_12 > 1 ? 's' : ''}
-              </span>
-            )}
-            {data.passengers.bebes_0_2 > 0 && (
-              <span style={{ fontSize: 12, color: 'rgba(251,191,36,0.85)', fontWeight: 600 }}>
-                👶 {data.passengers.bebes_0_2} Bebé{data.passengers.bebes_0_2 > 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
+          <p style={{ fontSize: 15, color: '#fff', fontWeight: 600 }}>
+            {data.passengers.adultos} Adul, {data.passengers.ninos_2_12} Niñ, {data.passengers.bebes_0_2} Beb
+          </p>
         </div>
         <motion.span
           key={total}
-          initial={{ scale: 0.4, opacity: 0 }}
+          initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-          style={{ fontSize: 48, fontWeight: 900, color: '#F59E0B', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}
+          style={{ fontSize: 40, fontWeight: 800, color: '#D4B87A', lineHeight: 1 }}
         >
           {total}
         </motion.span>
       </motion.div>
-
-      {/* Note */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 14, background: 'rgba(52,211,153,0.05)', borderRadius: 12, border: '1px solid rgba(52,211,153,0.12)' }}>
-        <span style={{ fontSize: 15, flexShrink: 0 }}>💡</span>
-        <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.75)', lineHeight: 1.6, fontWeight: 500 }}>
-          👶 Los bebés de <strong style={{ color: '#34D399' }}>0 a 2 años</strong> generalmente viajan gratis en vuelos (sin asiento propio). Consultá con tu asesor para más detalles.
-        </p>
-      </div>
     </div>
   )
 })

@@ -14,34 +14,40 @@ const TIPOS_VIAJE = [
   { value: 'otro',         label: 'Otro' },
 ]
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, paddingTop: 8, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-      <span style={{ fontSize: 12, color: 'rgba(100,116,139,1)', fontWeight: 600 }}>{label}</span>
-      <span style={{ fontSize: 13, color: '#F0F4FF', fontWeight: 600, textAlign: 'right', maxWidth: '65%' }}>{value}</span>
-    </div>
-  )
-}
-
-function SummaryCard({ emoji, title, children, delay = 0 }: { emoji: string; title: string; children: React.ReactNode; delay?: number }) {
+function Card({ icon, title, children, delay = 0 }: { icon: string; title: string; children: React.ReactNode; delay?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.25 }}
+      transition={{ delay, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1.5px solid rgba(255,255,255,0.08)',
-        borderRadius: 18,
-        padding: '20px 24px',
+        background: 'rgba(255,255,255,0.035)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: 20,
+        padding: '22px 24px',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <span style={{ fontSize: 20 }}>{emoji}</span>
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'rgba(201,169,110,0.9)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{title}</h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <span style={{
+          display: 'flex', width: 34, height: 34, borderRadius: 12, flexShrink: 0,
+          background: 'rgba(201,169,110,0.12)',
+          alignItems: 'center', justifyContent: 'center', fontSize: 16,
+        }}>
+          {icon}
+        </span>
+        <h3 style={{ fontSize: 13, fontWeight: 800, color: '#F0F4FF', letterSpacing: '0.02em', margin: 0 }}>{title}</h3>
       </div>
       {children}
     </motion.div>
+  )
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 14, color: '#F0F4FF', fontWeight: 600, textAlign: 'right' }}>{value}</span>
+    </div>
   )
 }
 
@@ -59,28 +65,37 @@ export function Step6Summary() {
 
   const totalPax = data.passengers.adultos + data.passengers.ninos_2_12 + data.passengers.bebes_0_2
 
-  const fechaResumen = () => {
-    if (data.dates.tipo_fecha === 'exacta') {
-      const hasDestDates = Object.keys(data.dates.fechas_por_destino || {}).length > 0
-      
-      if (hasDestDates) {
+  const tipoLabel = data.dates.tipo_fecha === 'exacta'
+    ? 'Fechas exactas'
+    : data.dates.tipo_fecha === 'flexible'
+      ? 'Mes flexible'
+      : 'Mes'
+
+  const datesContent = () => {
+    const d = data.dates
+    if (d.tipo_fecha === 'exacta') {
+      const perDest = Object.entries(d.fechas_por_destino || {})
+      if (perDest.length > 0) {
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-            {Object.entries(data.dates.fechas_por_destino).map(([dest, d]: any) => (
-              <span key={dest} style={{ fontSize: 11 }}>
-                • <b>{dest.replace(/_/g, ' ')}</b>: {d.fecha_salida ? formatDate(d.fecha_salida) : '—'} al {d.fecha_regreso ? formatDate(d.fecha_regreso) : '—'}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {perDest.map(([dest, fd]) => (
+              <span key={dest} style={{ fontSize: 13, color: '#F0F4FF', fontWeight: 600, lineHeight: 1.5 }}>
+                <b style={{ color: '#C9A96E' }}>{dest.replace(/_/g, ' ')}</b>: {fd.fecha_salida ? formatDate(fd.fecha_salida) : '—'} <span style={{ color: '#C9A96E' }}>→</span> {fd.fecha_regreso ? formatDate(fd.fecha_regreso) : '—'}
               </span>
             ))}
           </div>
         )
       }
-
-      return `${data.dates.fecha_salida ? formatDate(data.dates.fecha_salida) : '—'} al ${data.dates.fecha_regreso ? formatDate(data.dates.fecha_regreso) : '—'}`
+      if (d.fecha_salida && d.fecha_regreso) {
+        return (
+          <p style={{ fontSize: 16, fontWeight: 800, color: '#F0F4FF', margin: 0, lineHeight: 1.4 }}>
+            {formatDate(d.fecha_salida)} <span style={{ color: '#C9A96E' }}>→</span> {formatDate(d.fecha_regreso)}
+          </p>
+        )
+      }
+      return <p style={{ fontSize: 13, color: '#64748B', margin: 0 }}>Fechas a definir</p>
     }
-    if (data.dates.tipo_fecha === 'flexible') {
-      return `${data.dates.rango_fecha_inicio ? formatDate(data.dates.rango_fecha_inicio) : '—'} al ${data.dates.rango_fecha_fin ? formatDate(data.dates.rango_fecha_fin) : '—'}`
-    }
-    return data.dates.mes_preferido || '—'
+    return <p style={{ fontSize: 16, fontWeight: 800, color: '#F0F4FF', margin: 0 }}>{d.mes_preferido || '—'}</p>
   }
 
   return (
@@ -108,68 +123,63 @@ export function Step6Summary() {
         </p>
       </motion.div>
 
-      {/* Destination */}
-      <SummaryCard emoji="🗺️" title="Destino" delay={0.08}>
-        <SummaryRow label="Salida desde" value={ciudad?.label || data.origin.ciudad_salida || 'No especificado'} />
-        <div style={{ paddingTop: 8, paddingBottom: 4 }}>
-          <p style={{ fontSize: 12, color: 'rgba(100,116,139,1)', fontWeight: 600, marginBottom: 8 }}>Destinos</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <Card icon="🗺️" title="Destino" delay={0.08}>
+          <Row label="Salida desde" value={ciudad?.label || data.origin.ciudad_salida || 'No especificado'} />
+          <div style={{ paddingTop: 12 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {destinos.map(d => (
+                <span key={d!.value} className="chip-tag" style={{ fontSize: 12, padding: '6px 14px' }}>
+                  {d!.emoji} {d!.label}
+                </span>
+              ))}
+              {data.destination.destino_personalizado && (
+                <span className="chip-tag" style={{ fontSize: 12, padding: '6px 14px' }}>✏️ {data.destination.destino_personalizado}</span>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        <Card icon="📅" title="Fechas" delay={0.13}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <span className="chip-tag" style={{ alignSelf: 'flex-start', fontSize: 11, padding: '4px 12px' }}>
+              {tipoLabel}
+            </span>
+            {datesContent()}
+          </div>
+        </Card>
+
+        <Card icon="👥" title="Pasajeros" delay={0.18}>
+          {data.passengers.adultos > 0 && <Row label="Adultos" value={String(data.passengers.adultos)} />}
+          {data.passengers.ninos_2_12 > 0 && <Row label="Niños" value={String(data.passengers.ninos_2_12)} />}
+          {data.passengers.bebes_0_2 > 0 && <Row label="Bebés" value={String(data.passengers.bebes_0_2)} />}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingTop: 10 }}>
+            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Total viajeros</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#C9A96E' }}>{totalPax}</span>
+          </div>
+        </Card>
+
+        <Card icon="⭐" title="Servicios" delay={0.23}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {destinos.map(d => (
-              <span key={d!.value} className="chip-tag" style={{ fontSize: 11 }}>
-                {d!.emoji} {d!.label}
+            {servicios.map(s => (
+              <span key={s!.value} className="chip-tag" style={{ fontSize: 12, padding: '6px 14px' }}>
+                {s!.icon} {s!.label}
               </span>
             ))}
-            {data.destination.destino_personalizado && (
-              <span className="chip-tag" style={{ fontSize: 11 }}>✏️ {data.destination.destino_personalizado}</span>
-            )}
           </div>
-        </div>
-      </SummaryCard>
-
-      {/* Dates + Passengers grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <SummaryCard emoji="📅" title="Fechas" delay={0.13}>
-          <div style={{ fontSize: 12, color: 'rgba(148,163,184,0.8)', fontWeight: 500, lineHeight: 1.6 }}>
-            <p style={{ fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>
-              {data.dates.tipo_fecha === 'exacta' ? 'Exacta' : data.dates.tipo_fecha === 'flexible' ? 'Flexible' : 'Mes'}
-            </p>
-            {fechaResumen()}
-          </div>
-        </SummaryCard>
-
-        <SummaryCard emoji="👥" title="Pasajeros" delay={0.18}>
-          <div style={{ fontSize: 12, color: 'rgba(148,163,184,0.8)', fontWeight: 500, lineHeight: 1.8 }}>
-            {data.passengers.adultos > 0 && <p>🧑 {data.passengers.adultos} Adultos</p>}
-            {data.passengers.ninos_2_12 > 0 && <p>👧 {data.passengers.ninos_2_12} Niños</p>}
-            {data.passengers.bebes_0_2 > 0 && <p>👶 {data.passengers.bebes_0_2} Bebés</p>}
-            <p style={{ fontWeight: 800, color: '#C9A96E', marginTop: 4, fontSize: 13 }}>Total: {totalPax}</p>
-          </div>
-        </SummaryCard>
+        </Card>
       </div>
 
-      {/* Services */}
-      <SummaryCard emoji="⭐" title="Servicios" delay={0.23}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {servicios.map(s => (
-            <span key={s!.value} className="chip-tag" style={{ fontSize: 11 }}>
-              {s!.icon} {s!.label}
-            </span>
-          ))}
-        </div>
-      </SummaryCard>
-
-      {/* Contact */}
       {data.personal.nombre && (
-        <SummaryCard emoji="📬" title="Contacto" delay={0.28}>
-          <SummaryRow label="Nombre" value={`${data.personal.nombre} ${data.personal.apellido}`} />
-          <SummaryRow label="Email"  value={data.personal.email} />
-          <SummaryRow label="Celular" value={data.personal.celular} />
-        </SummaryCard>
+        <Card icon="📬" title="Contacto" delay={0.28}>
+          <Row label="Nombre" value={`${data.personal.nombre} ${data.personal.apellido}`} />
+          <Row label="Email"  value={data.personal.email || '—'} />
+          <Row label="Celular" value={data.personal.celular || '—'} />
+        </Card>
       )}
 
-      {/* Extra – tipo de viaje + comentarios */}
-      <SummaryCard emoji="💬" title="Detalles extra" delay={0.33}>
-        <div className="space-y-3">
+      <Card icon="💬" title="Detalles extra" delay={0.33}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
             <label className="input-label" htmlFor="tipo-viaje">Tipo de viaje (opcional)</label>
             <select
@@ -195,29 +205,31 @@ export function Step6Summary() {
               placeholder="Servicios extra, requisitos especiales, etc."
               rows={3}
               className="textarea-dark"
-              onFocus={e => { e.target.style.borderColor = '#C9A96E'; e.target.style.boxShadow = '0 0 0 3px rgba(201,169,110,0.12)' }}
-              onBlur={e  => { e.target.style.borderColor = 'rgba(255,255,255,0.09)'; e.target.style.boxShadow = 'none' }}
             />
           </div>
         </div>
-      </SummaryCard>
+      </Card>
 
-      {/* Trust badges */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.45 }}
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}
+        style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 8, paddingTop: 4 }}
       >
         {[
           { emoji: '🛡️', label: 'Sin compromiso' },
           { emoji: '⚡', label: 'Respuesta rápida' },
           { emoji: '🌟', label: 'Personalizado' },
         ].map(({ emoji, label }) => (
-          <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '16px 12px', background: 'rgba(201,169,110,0.05)', border: '1px solid rgba(201,169,110,0.1)', borderRadius: 14 }}>
-            <span style={{ fontSize: 24 }}>{emoji}</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(148,163,184,1)', textAlign: 'center' }}>{label}</span>
-          </div>
+          <span key={label} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            padding: '9px 16px', borderRadius: 999,
+            background: 'rgba(201,169,110,0.06)', border: '1px solid rgba(201,169,110,0.12)',
+            fontSize: 12, fontWeight: 700, color: 'rgba(148,163,184,1)',
+          }}>
+            <span style={{ fontSize: 15 }}>{emoji}</span>
+            {label}
+          </span>
         ))}
       </motion.div>
     </div>

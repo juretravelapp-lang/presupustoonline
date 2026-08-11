@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useWizardStore } from '@/stores/wizardStore'
-import { CIUDADES_SALIDA } from '@/lib/constants'
 import { Shield } from 'lucide-react'
 import type { StepHandle } from '../WizardShell'
 import { motion } from 'motion/react'
@@ -14,23 +13,46 @@ const schema = z.object({
   dni:          z.string().min(6, 'Mínimo 6 dígitos').max(15, 'Máximo 15 dígitos').regex(/^[\d\.\s\-]+$/, 'Solo números, puntos y guiones'),
   email:        z.string().email('Email inválido').optional().or(z.literal('')),
   celular:      z.string().min(8, 'Mínimo 8 dígitos').max(30, 'Máximo 30 caracteres').regex(/^[\d\s\-\+]+$/, 'Solo números, guiones, espacios y +'),
-  ciudad_salida: z.string().optional().default(''),
 })
 
 type FormData = z.infer<typeof schema>
 
-const ICONS: Record<string, string> = {
-  nombre: '👤',
-  apellido: '👤',
-  dni: '🪪',
-  email: '📧',
-  celular: '📱',
+type FieldDef = {
+  name: keyof FormData
+  label: string
+  placeholder: string
+  type: string
+  inputMode?: React.HTMLInputTypeAttribute
+  optional?: boolean
+}
+
+const dataFields: FieldDef[] = [
+  { name: 'nombre',   label: 'Nombre',   placeholder: 'Tu nombre',            type: 'text' },
+  { name: 'apellido', label: 'Apellido', placeholder: 'Tu apellido',          type: 'text' },
+  { name: 'dni',      label: 'DNI',      placeholder: 'Nº de documento',      type: 'tel', inputMode: 'numeric' },
+]
+
+const contactFields: FieldDef[] = [
+  { name: 'email',   label: 'Email',   placeholder: 'tu@email.com',         type: 'email', inputMode: 'email', optional: true },
+  { name: 'celular', label: 'Celular', placeholder: '+54 9 381 123-4567',   type: 'tel',   inputMode: 'tel' },
+]
+
+function SectionTitle({ icon, text }: { icon: string; text: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+      <span style={{ fontSize: 14 }}>{icon}</span>
+      <span style={{ fontSize: 12, fontWeight: 700, color: '#D4B87A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        {text}
+      </span>
+      <div style={{ flex: 1, height: 1, background: 'rgba(201,169,110,0.2)' }} />
+    </div>
+  )
 }
 
 export const Step5Contact = forwardRef<StepHandle>(function Step5Contact(_, ref) {
   const { data, updateData, markStepCompleted } = useWizardStore()
 
-  const { register, trigger, getValues, watch, setValue, formState: { errors } } = useForm<FormData>({
+  const { register, trigger, getValues, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       nombre:        data.personal.nombre,
@@ -38,36 +60,53 @@ export const Step5Contact = forwardRef<StepHandle>(function Step5Contact(_, ref)
       dni:           data.personal.dni,
       email:         data.personal.email,
       celular:       data.personal.celular,
-      ciudad_salida: data.origin.ciudad_salida,
     },
     mode: 'onChange',
   })
-
-  const selectedCity = watch('ciudad_salida')
 
   useImperativeHandle(ref, () => ({
     validate: async () => {
       const isValid = await trigger()
       if (isValid) {
         const values = getValues()
-        const ciudad = CIUDADES_SALIDA.find(c => c.value === values.ciudad_salida)
         updateData('personal', { nombre: values.nombre, apellido: values.apellido, dni: values.dni, email: values.email, celular: values.celular })
-        updateData('origin', { ciudad_salida: values.ciudad_salida, aeropuerto_salida: ciudad?.aeropuerto || '' })
         markStepCompleted('contact')
       }
       return isValid
     },
   }))
 
-  const rowFields: { name: keyof FormData; label: string; placeholder: string; type: string; inputMode?: React.HTMLInputTypeAttribute }[] = [
-    { name: 'nombre',   label: 'Nombre',   placeholder: 'Tu nombre',            type: 'text' },
-    { name: 'apellido', label: 'Apellido', placeholder: 'Tu apellido',           type: 'text' },
-  ]
-  const colFields: { name: keyof FormData; label: string; placeholder: string; type: string; inputMode?: React.HTMLInputTypeAttribute }[] = [
-    { name: 'dni',    label: 'DNI',    placeholder: 'Nº de documento',     type: 'tel',   inputMode: 'numeric' },
-    { name: 'email',  label: 'Email',  placeholder: 'tu@email.com',        type: 'email', inputMode: 'email' },
-    { name: 'celular',label: 'Celular',placeholder: '+54 9 381 123-4567',  type: 'tel',   inputMode: 'tel' },
-  ]
+  const renderField = (field: FieldDef, delay: number) => {
+    const err = errors[field.name]
+    return (
+      <motion.div
+        key={field.name}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <label className="input-label" htmlFor={field.name}>
+          {field.label}
+          {field.optional && (
+            <span style={{ color: 'rgba(148,163,184,0.5)', fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}>
+              {' '}(opcional)
+            </span>
+          )}
+        </label>
+        <input
+          id={field.name}
+          type={field.type}
+          inputMode={field.inputMode as React.InputHTMLAttributes<HTMLInputElement>['inputMode']}
+          placeholder={field.placeholder}
+          className={`input-dark ${err ? 'has-error' : ''}`}
+          {...register(field.name)}
+        />
+        {err && (
+          <p className="error-text">{err.message}</p>
+        )}
+      </motion.div>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -91,8 +130,7 @@ export const Step5Contact = forwardRef<StepHandle>(function Step5Contact(_, ref)
         <div className="gold-divider" style={{ margin: '20px 0 16px' }} />
       </motion.div>
 
-      <form onSubmit={e => e.preventDefault()} className="space-y-6">
-        {/* Privacy note */}
+      <form onSubmit={e => e.preventDefault()} className="space-y-8">
         <motion.div
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
@@ -100,104 +138,31 @@ export const Step5Contact = forwardRef<StepHandle>(function Step5Contact(_, ref)
         >
           <Shield size={16} style={{ color: 'rgba(201,169,110,0.8)', flexShrink: 0, marginTop: 2 }} />
           <p style={{ fontSize: 13, color: 'rgba(148,163,184,0.75)', lineHeight: 1.5, fontWeight: 500 }}>
-            🔒 Tu información está protegida y no será compartida con terceros. Usamos tus datos solo para contactarte.
+            Tu información está protegida y no será compartida con terceros. Usamos tus datos solo para contactarte.
           </p>
         </motion.div>
 
-        {/* Nombre + Apellido row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          {rowFields.map((field, i) => (
-            <motion.div key={field.name} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <label className="input-label" htmlFor={field.name}>
-                {ICONS[field.name]} {field.label}
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  id={field.name}
-                  type={field.type}
-                  placeholder={field.placeholder}
-                  className={`input-dark ${errors[field.name] ? 'has-error' : ''}`}
-                  {...register(field.name)}
-                />
-              </div>
-              {errors[field.name] && (
-                <p className="error-text">{errors[field.name]?.message}</p>
-              )}
-            </motion.div>
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          <section>
+            <SectionTitle icon="👤" text="Datos personales" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {renderField(dataFields[0], 0.1)}
+              {renderField(dataFields[1], 0.15)}
+            </div>
+            <div style={{ marginTop: 16 }}>
+              {renderField(dataFields[2], 0.2)}
+            </div>
+          </section>
+
+          <section>
+            <SectionTitle icon="📞" text="Medio de contacto" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {renderField(contactFields[0], 0.25)}
+              {renderField(contactFields[1], 0.3)}
+            </div>
+          </section>
         </div>
-
-        {/* Other fields */}
-        {colFields.map((field, i) => (
-          <motion.div key={field.name} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (i + 2) * 0.05 }}>
-            <label className="input-label" htmlFor={field.name}>
-              {ICONS[field.name]} {field.label}
-            </label>
-            <input
-              id={field.name}
-              type={field.type}
-              inputMode={field.inputMode as React.InputHTMLAttributes<HTMLInputElement>['inputMode']}
-              placeholder={field.placeholder}
-              className={`input-dark ${errors[field.name] ? 'has-error' : ''}`}
-              {...register(field.name)}
-            />
-            {errors[field.name] && (
-              <p className="error-text">{errors[field.name]?.message}</p>
-            )}
-          </motion.div>
-        ))}
-
-        {/* Ciudad de salida */}
-        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <label className="input-label">📍 Ciudad de salida (opcional)</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {CIUDADES_SALIDA.filter(c => c.value !== 'otra').map(ciudad => (
-              <button
-                key={ciudad.value}
-                type="button"
-                onClick={() => setValue('ciudad_salida', ciudad.value, { shouldValidate: true })}
-                aria-pressed={selectedCity === ciudad.value}
-                style={{
-                  padding: '14px',
-                  borderRadius: 14,
-                  border: selectedCity === ciudad.value ? '1.5px solid rgba(201,169,110,0.5)' : '1.5px solid rgba(255,255,255,0.07)',
-                  background: selectedCity === ciudad.value ? 'rgba(201,169,110,0.1)' : 'rgba(255,255,255,0.03)',
-                  color: selectedCity === ciudad.value ? '#C9A96E' : 'rgba(148,163,184,0.8)',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  textAlign: 'center',
-                }}
-              >
-                {ciudad.label}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setValue('ciudad_salida', '', { shouldValidate: true })}
-            aria-pressed={!selectedCity}
-            style={{
-              width: '100%',
-              marginTop: 10,
-              padding: '14px',
-              borderRadius: 14,
-              border: !selectedCity ? '1.5px solid rgba(201,169,110,0.4)' : '1.5px solid rgba(255,255,255,0.07)',
-              background: !selectedCity ? 'rgba(201,169,110,0.07)' : 'rgba(255,255,255,0.03)',
-              color: 'rgba(148,163,184,0.7)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-          >
-            No estoy seguro / Otra ciudad
-          </button>
-          <input type="hidden" {...register('ciudad_salida')} />
-        </motion.div>
       </form>
-
     </div>
   )
 })

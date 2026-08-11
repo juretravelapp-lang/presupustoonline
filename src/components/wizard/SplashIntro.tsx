@@ -1,258 +1,150 @@
-import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { Plane } from 'lucide-react'
+import { useState } from 'react'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
+import { ChevronRight } from 'lucide-react'
 
 interface SplashIntroProps {
   onFinish: () => void
 }
 
-const TAGLINES = [
-  'Tu próximo destino te espera',
-  'Viajá con confianza',
-  'Tu presupuesto, sin compromiso',
-]
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=2400&auto=format&fit=crop'
+
+const SAFE_TOP = 'max(env(safe-area-inset-top), 40px)'
+const SAFE_BOTTOM = 'max(env(safe-area-inset-bottom), 32px)'
 
 export function SplashIntro({ onFinish }: SplashIntroProps) {
-  const [taglineIdx, setTaglineIdx] = useState(0)
-  const [showCta, setShowCta] = useState(false)
-  const [planeReady, setPlaneReady] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
+  const reduceMotion = useReducedMotion()
 
-  /* Cycle taglines every 2s */
-  useEffect(() => {
-    if (taglineIdx < TAGLINES.length - 1) {
-      const t = setTimeout(() => setTaglineIdx(i => i + 1), 2000)
-      return () => clearTimeout(t)
-    }
-  }, [taglineIdx])
-
-  /* Plane takes off after 2nd tagline */
-  useEffect(() => {
-    if (taglineIdx === 1) {
-      const t = setTimeout(() => setPlaneReady(true), 300)
-      return () => clearTimeout(t)
-    }
-  }, [taglineIdx])
-
-  /* CTA button after all taglines */
-  useEffect(() => {
-    if (taglineIdx === TAGLINES.length - 1) {
-      const t = setTimeout(() => setShowCta(true), 600)
-      return () => clearTimeout(t)
-    }
-  }, [taglineIdx])
-
-  /* Auto-finish at ~7.5s */
-  const finish = useCallback(() => {
+  const handleClick = () => {
     if (isExiting) return
     setIsExiting(true)
-    setTimeout(onFinish, 500)
-  }, [isExiting, onFinish])
-
-  useEffect(() => {
-    const t = setTimeout(finish, 7500)
-    return () => clearTimeout(t)
-  }, [finish])
-
-  const handleClick = () => finish()
+    setTimeout(onFinish, reduceMotion ? 200 : 500)
+  }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 1.03 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      onClick={handleClick}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 99999,
-        background: 'linear-gradient(160deg, #0A1526 0%, #0F1E35 45%, #0D2040 100%)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', overflow: 'hidden',
-        fontFamily: 'var(--font-sans)',
-      }}
-    >
-      {/* ── Ambient glow orbs ─────────────── */}
-      <div style={{
-        position: 'absolute', top: '15%', left: '10%', width: 320, height: 320,
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(201,169,110,0.07) 0%, transparent 65%)',
-        pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '10%', right: '10%', width: 260, height: 260,
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(30,58,95,0.25) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute', top: '50%', right: '5%', width: 180, height: 180,
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(201,169,110,0.04) 0%, transparent 70%)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* ── Stars ─────────────── */}
-      {Array.from({ length: 12 }).map((_, i) => (
+    <AnimatePresence>
+      {!isExiting && (
         <motion.div
-          key={i}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: [0, 0.6, 0], scale: [0, 1, 0] }}
-          transition={{
-            duration: 2 + (i % 3) * 1.5,
-            repeat: Infinity,
-            delay: i * 0.4,
-            ease: 'easeInOut',
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, scale: 1.08, filter: 'blur(14px)' }}
+          transition={{ duration: reduceMotion ? 0.2 : 0.5, ease: EASE }}
+          onClick={handleClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') handleClick()
           }}
-          style={{
-            position: 'absolute',
-            top: `${10 + (i * 7) % 80}%`,
-            left: `${(i * 13) % 90}%`,
-            width: 2, height: 2, borderRadius: '50%',
-            background: '#C9A96E',
-            pointerEvents: 'none',
-          }}
-        />
-      ))}
-
-      {/* ── Logo ─────────────── */}
-      <motion.div
-        initial={{ scale: 0.4, opacity: 0, y: 30 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-        style={{ marginBottom: 24, position: 'relative' }}
-      >
-        <motion.div
-          animate={{
-            boxShadow: [
-              '0 0 0px rgba(201,169,110,0)',
-              '0 0 50px rgba(201,169,110,0.12)',
-              '0 0 20px rgba(201,169,110,0.06)',
-            ],
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          style={{
-            borderRadius: 20, padding: '10px 20px',
-            background: 'rgba(255,255,255,0.02)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.04)',
-          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Jure Travel. Tocá para comenzar tu aventura"
+          className="fixed inset-0 z-[99999] overflow-hidden font-sans"
+          style={{ background: '#0A1526', cursor: 'pointer', outline: 'none' }}
         >
-          <img
-            src="/assets/logo.svg"
-            alt="JURE TRAVEL"
-            style={{ width: 'clamp(180px, 40vw, 260px)', height: 'auto', display: 'block' }}
-          />
-        </motion.div>
-      </motion.div>
-
-      {/* ── Gold line ─────────────── */}
-      <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.7 }}
-        style={{
-          width: 100, height: 1.5,
-          background: 'linear-gradient(90deg, transparent, #C9A96E, transparent)',
-          marginBottom: 28, transformOrigin: 'center',
-        }}
-      />
-
-      {/* ── Taglines ─────────────── */}
-      <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={taglineIdx}
-            initial={{ opacity: 0, y: 16, filter: 'blur(6px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -16, filter: 'blur(6px)' }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(17px, 2.8vw, 23px)',
-              color: 'rgba(240,244,255,0.8)',
-              fontWeight: 400, textAlign: 'center',
-              letterSpacing: '0.02em', fontStyle: 'italic',
-              margin: 0,
-            }}
-          >
-            {TAGLINES[taglineIdx]}
-          </motion.p>
-        </AnimatePresence>
-      </div>
-
-      {/* ── Airplane ─────────────── */}
-      <AnimatePresence>
-        {planeReady && (
           <motion.div
-            key="plane"
-            initial={{ x: '-40vw', y: '12vh', opacity: 0, rotate: 25 }}
-            animate={{ x: '70vw', y: '-12vh', opacity: [0, 1, 1, 0], rotate: 5 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 2.8, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              position: 'absolute', bottom: '28%', left: 0,
-              color: '#C9A96E', pointerEvents: 'none',
-            }}
+            initial={{ scale: reduceMotion ? 1 : 1.12 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: reduceMotion ? 0 : 4, ease: EASE }}
+            className="absolute inset-0"
           >
-            <Plane size={28} fill="#C9A96E" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Vapor trail ─────────────── */}
-      <AnimatePresence>
-        {planeReady && (
-          <motion.div
-            key="trail"
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: [0, 0.4, 0.15, 0] }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 2.8, ease: 'easeOut' }}
-            style={{
-              position: 'absolute', bottom: '28%', left: '5%',
-              width: '90%', height: 1.5,
-              background: 'linear-gradient(90deg, transparent 0%, rgba(201,169,110,0.2) 15%, rgba(201,169,110,0.15) 40%, transparent 60%)',
-              transformOrigin: 'left center',
-              pointerEvents: 'none',
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* ── CTA ─────────────── */}
-      <AnimatePresence>
-        {showCta && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            style={{ marginTop: 36, textAlign: 'center' }}
-          >
-            <button
-              onClick={e => { e.stopPropagation(); handleClick() }}
+            <img
+              src={HERO_IMAGE}
+              alt=""
+              className="h-full w-full object-cover"
               style={{
-                padding: '14px 40px', borderRadius: 12, border: 'none',
-                background: '#C9A96E', color: '#0A1526',
-                fontWeight: 800, fontSize: 15, cursor: 'pointer',
-                transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
-                fontFamily: 'var(--font-sans)',
-                boxShadow: '0 4px 28px rgba(201,169,110,0.3)',
-                letterSpacing: '0.02em',
+                filter: 'blur(3px) saturate(1.05)',
+                transform: 'scale(1.04)',
+                objectPosition: 'center',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#D4B87A'; e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(201,169,110,0.4)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = '#C9A96E'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.boxShadow = '0 4px 28px rgba(201,169,110,0.3)' }}
-            >
-              Comenzar
-            </button>
-            <p style={{
-              fontSize: 11, color: 'rgba(148,163,184,0.35)',
-              marginTop: 10, fontWeight: 500,
-            }}>
-              o tocá en cualquier parte
-            </p>
+              loading="eager"
+              fetchPriority="high"
+            />
           </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,21,38,0.45)_0%,rgba(10,21,38,0.15)_40%,rgba(10,21,38,0.6)_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_75%_at_50%_50%,transparent_45%,rgba(10,21,38,0.35)_100%)]" />
+
+          <div
+            className="relative z-10 flex h-full flex-col px-6"
+            style={{ paddingTop: SAFE_TOP, paddingBottom: SAFE_BOTTOM }}
+          >
+            <div className="flex flex-1 flex-col items-center justify-center text-center">
+              <motion.div
+                initial={{ scale: 0.6, opacity: 0, y: -10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
+                className="mb-7"
+              >
+                <motion.svg
+                  animate={reduceMotion ? undefined : { y: [0, -5, 0] }}
+                  transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
+                  width="44"
+                  height="44"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  style={{ filter: 'drop-shadow(0 4px 18px rgba(201,169,110,0.5))' }}
+                >
+                  <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" fill="#D4B87A" />
+                </motion.svg>
+              </motion.div>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 22 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
+                className="font-serif text-[54px] font-bold leading-[1.02] tracking-[-0.03em] text-white sm:text-[76px]"
+                style={{ textShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+              >
+                Jure <span style={{ color: '#D4B87A' }}>Travel</span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.5, ease: EASE }}
+                className="mt-5 font-serif text-base font-medium italic tracking-wide text-white/75 sm:text-lg"
+                style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}
+              >
+                Tu próximo destino te espera
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.65, ease: EASE }}
+                className="mt-16 w-full max-w-md"
+              >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleClick()
+                }}
+                className="group relative flex min-h-[60px] w-full items-center justify-center gap-3 overflow-hidden rounded-full px-8 py-5 text-[16px] font-extrabold tracking-tight text-[#0A1526] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_50px_rgba(201,169,110,0.55)] active:scale-[0.97]"
+                style={{
+                  background: 'linear-gradient(135deg, #F0D98C 0%, #D4B87A 40%, #C9A96E 70%, #B08D57 100%)',
+                  boxShadow: '0 16px 40px rgba(201,169,110,0.45), inset 0 1px 0 rgba(255,255,255,0.5)',
+                }}
+              >
+                <span className="relative z-10">Comenzar Aventura</span>
+                <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full bg-[#0A1526]/10 transition-transform duration-300 group-hover:translate-x-0.5">
+                  <ChevronRight size={16} strokeWidth={3} />
+                </span>
+                {!reduceMotion && (
+                  <motion.span
+                    initial={{ x: '-150%' }}
+                    animate={{ x: '250%' }}
+                    transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 1.4, ease: 'easeInOut' }}
+                    className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12"
+                    style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)' }}
+                  />
+                )}
+              </button>
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

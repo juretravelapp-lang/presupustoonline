@@ -12,45 +12,46 @@ import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
 import { insertQuote, type InsertQuote } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'motion/react'
-import { ArrowLeft, ArrowRight, Send, Loader2, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Send, Loader2, Check, Plane, Calendar, Users, Sparkles, Mail, FileText } from 'lucide-react'
 import { WIZARD_STEPS, STEP_LABELS } from '@/types/wizard'
 
 export interface StepHandle {
   validate: () => Promise<boolean>
 }
 
+const STEP_ICONS: Record<string, React.ElementType> = {
+  destination: Plane,
+  dates: Calendar,
+  passengers: Users,
+  preferences: Sparkles,
+  contact: Mail,
+  summary: FileText,
+}
+
 /* ── Single step circle (desktop & mobile) ──────────────────────── */
-function StepDot({ label, isDone, isCurrent, index }: {
-  label: string; isDone: boolean; isCurrent: boolean; index: number
+function StepDot({ label, isDone, isCurrent, index, stepKey }: {
+  label: string; isDone: boolean; isCurrent: boolean; index: number; stepKey: string
 }) {
-  const size = isCurrent ? 36 : 32
+  const size = 36
+  const Icon = STEP_ICONS[stepKey] || Plane
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0, position: 'relative' }}>
       <motion.div
-        animate={isCurrent ? { scale: [1, 1.06, 1] } : {}}
+        animate={isCurrent ? { scale: [1, 1.05, 1] } : {}}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         style={{
           width: size, height: size, borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: isDone ? 13 : isCurrent ? 14 : 12,
-          fontWeight: 800,
-          background: isDone ? '#C9A96E' : isCurrent ? 'rgba(201,169,110,0.15)' : 'rgba(255,255,255,0.06)',
-          border: isDone ? 'none' : `2px solid ${isCurrent ? '#C9A96E' : 'rgba(255,255,255,0.1)'}`,
-          color: isDone ? '#0A1526' : isCurrent ? '#C9A96E' : 'rgba(148,163,184,0.5)',
-          boxShadow: isCurrent ? '0 0 20px rgba(201,169,110,0.2)' : 'none',
+          background: isDone ? '#2d3345' : isCurrent ? '#D4B87A' : '#1e2433',
+          border: isCurrent ? '2px solid rgba(212,184,122,0.3)' : '1px solid rgba(255,255,255,0.05)',
+          color: isDone ? '#5e687e' : isCurrent ? '#0A1526' : '#384152',
+          boxShadow: isCurrent ? '0 0 15px rgba(212,184,122,0.3)' : 'none',
           transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+          zIndex: 2,
         }}
       >
-        {isDone ? <Check size={14} strokeWidth={3} /> : index + 1}
+        <Icon size={16} strokeWidth={isCurrent ? 2.5 : 2} />
       </motion.div>
-      <span className="hidden sm:block" style={{
-        fontSize: 10, fontWeight: isCurrent ? 700 : 500,
-        color: isCurrent ? '#C9A96E' : isDone ? 'rgba(201,169,110,0.5)' : 'rgba(148,163,184,0.4)',
-        textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        maxWidth: 80, lineHeight: 1.2,
-      }}>
-        {label}
-      </span>
     </div>
   )
 }
@@ -58,12 +59,12 @@ function StepDot({ label, isDone, isCurrent, index }: {
 /* ── Step progress line ─────────────────────────────────────────── */
 function ProgressLine({ done }: { done: boolean }) {
   return (
-    <div style={{ flex: 1, height: 2, margin: '0 4px', marginBottom: 22, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+    <div style={{ flex: 1, height: 2, margin: '0 -4px', background: '#1e2433', zIndex: 1, position: 'relative' }}>
       <motion.div
         initial={{ width: '0%' }}
         animate={{ width: done ? '100%' : '0%' }}
         transition={{ duration: 0.4, ease: [0.16,1,0.3,1] }}
-        style={{ height: '100%', background: '#C9A96E', borderRadius: 2 }}
+        style={{ height: '100%', background: '#D4B87A' }}
       />
     </div>
   )
@@ -264,11 +265,10 @@ export function WizardShell() {
       {/* ── Step progress bar ──────────────────────────────────── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 40,
-        background: 'rgba(10,21,38,0.96)', backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        background: '#0A1526', // Solid dark background for the header
       }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', padding: '14px 20px 10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 20px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             {WIZARD_STEPS.map((step, index) => {
               const isDone = index < currentStepIndex
               const isCurrent = index === currentStepIndex
@@ -276,6 +276,7 @@ export function WizardShell() {
                 <div key={step} style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
                   <StepDot
                     index={index}
+                    stepKey={step}
                     label={STEP_LABELS[step as keyof typeof STEP_LABELS]}
                     isDone={isDone}
                     isCurrent={isCurrent}
@@ -285,6 +286,15 @@ export function WizardShell() {
               )
             })}
           </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 12 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#fff', m: 0 }}>
+              Paso {currentStepIndex + 1} de {WIZARD_STEPS.length}: <span style={{ color: '#D4B87A' }}>{STEP_LABELS[currentStep as keyof typeof STEP_LABELS]}</span>
+            </h2>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#7a859b' }}>
+              {Math.round(((currentStepIndex) / WIZARD_STEPS.length) * 100)}% completado
+            </span>
+          </div>
         </div>
       </div>
 
@@ -292,7 +302,7 @@ export function WizardShell() {
       <main
         id="wizard-content"
         role="main"
-        className="px-4 sm:px-6 pt-6 sm:pt-8"
+        className="px-4 sm:px-6 pt-0 sm:pt-4"
         style={{ maxWidth: 720, margin: '0 auto' }}
       >
         <motion.div
@@ -300,11 +310,10 @@ export function WizardShell() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            backdropFilter: 'blur(20px)',
+            background: '#162032',
             borderRadius: 20,
-            border: '1px solid rgba(255,255,255,0.06)',
-            padding: 'clamp(20px, 4vw, 40px)',
+            border: '1px solid rgba(255,255,255,0.03)',
+            padding: 'clamp(20px, 4vw, 32px)',
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -313,71 +322,71 @@ export function WizardShell() {
           <StepWrapper stepKey={currentStep} direction={direction}>
             {renderStep()}
           </StepWrapper>
-
-          {/* ── Navigation ───────────────────────────────────── */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginTop: 32, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)',
-          }}>
-            <div>
-              {currentStepIndex > 0 && (
-                <button
-                  onClick={handlePrev}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '10px 18px', background: 'transparent',
-                    color: 'rgba(148,163,184,0.8)', fontWeight: 600, fontSize: 13,
-                    border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10,
-                    cursor: 'pointer', transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#F0F4FF' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(148,163,184,0.8)' }}
-                >
-                  <ArrowLeft size={15} /> Anterior
-                </button>
-              )}
-            </div>
-            <div>
-              {isLastStep ? (
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '12px 28px', background: '#C9A96E',
-                    color: '#0A1526', fontWeight: 800, fontSize: 14,
-                    border: 'none', borderRadius: 12,
-                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                    opacity: isSubmitting ? 0.5 : 1,
-                    transition: 'all 0.15s',
-                    boxShadow: '0 4px 16px rgba(201,169,110,0.25)',
-                  }}
-                  onMouseEnter={e => { if (!isSubmitting) { e.currentTarget.style.background = '#D4B87A'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#C9A96E'; e.currentTarget.style.transform = 'translateY(0)' }}
-                >
-                  {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                  {isSubmitting ? 'Enviando...' : 'Enviar solicitud'}
-                </button>
-              ) : (
-                <button
-                  onClick={handleValidate}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '12px 28px', background: '#C9A96E',
-                    color: '#0A1526', fontWeight: 800, fontSize: 14,
-                    border: 'none', borderRadius: 12,
-                    cursor: 'pointer', transition: 'all 0.15s',
-                    boxShadow: '0 4px 16px rgba(201,169,110,0.25)',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#D4B87A'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#C9A96E'; e.currentTarget.style.transform = 'translateY(0)' }}
-                >
-                  Continuar <ArrowRight size={16} />
-                </button>
-              )}
-            </div>
-          </div>
         </motion.div>
+
+        {/* ── Navigation ───────────────────────────────────── */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          marginTop: 24, paddingBottom: 40
+        }}>
+          <div>
+            {currentStepIndex > 0 ? (
+              <button
+                onClick={handlePrev}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '12px 20px', background: 'transparent',
+                  color: '#fff', fontWeight: 700, fontSize: 14,
+                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12,
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
+              >
+                <ArrowLeft size={16} /> Atrás
+              </button>
+            ) : (
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#D4B87A' }}>
+                Armá tu viaje A medida
+              </span>
+            )}
+          </div>
+          <div>
+            {isLastStep ? (
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '14px 28px', background: '#D4B87A',
+                  color: '#0A1526', fontWeight: 800, fontSize: 15,
+                  border: 'none', borderRadius: 12,
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  opacity: isSubmitting ? 0.7 : 1,
+                  transition: 'all 0.15s',
+                }}
+              >
+                {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                {isSubmitting ? 'Enviando...' : 'Enviar solicitud'}
+              </button>
+            ) : (
+              <button
+                onClick={handleValidate}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '14px 28px', background: '#D4B87A',
+                  color: '#0A1526', fontWeight: 800, fontSize: 15,
+                  border: 'none', borderRadius: 12,
+                  cursor: 'pointer', transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#e6c886' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#D4B87A' }}
+              >
+                Siguiente <ArrowRight size={18} />
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Trust signals */}
         <motion.div
