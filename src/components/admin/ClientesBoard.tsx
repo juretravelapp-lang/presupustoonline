@@ -2,9 +2,10 @@ import { useState } from 'react'
 import {
   useClientes,
   useDeleteCliente,
+  useSyncClientes,
 } from '@/hooks/useClientesQuery'
 import {
-  Plus, X, User, Users, Phone, Pencil, Trash2, Mail, Loader2,
+  Plus, X, User, Users, Phone, Pencil, Trash2, Mail, Loader2, RefreshCw,
 } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { ClienteDetail } from './ClienteDetail'
@@ -13,6 +14,7 @@ import { ClienteFormModal } from './ClienteFormModal'
 export function ClientesBoard() {
   const { data: clientes, isLoading, refetch } = useClientes()
   const deleteMutation = useDeleteCliente()
+  const syncMutation = useSyncClientes()
 
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Cliente | null>(null)
@@ -39,6 +41,18 @@ export function ClientesBoard() {
     }
   }
 
+  const handleSync = async () => {
+    if (!window.confirm('¿Crear/actualizar fichas de clientes desde los presupuestos que no tienen cliente vinculado?')) return
+    try {
+      const res = await syncMutation.mutateAsync()
+      refetch()
+      alert(`✓ ${res.creados} cliente(s) creado(s) y ${res.vinculados} presupuesto(s) vinculado(s).`)
+    } catch (err) {
+      console.error(err)
+      alert('Error al sincronizar. Revisá la consola.')
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} className="animate-fade-in">
       {/* Header */}
@@ -51,9 +65,21 @@ export function ClientesBoard() {
             Ficha maestra por persona. Buscalo por nombre o DNI y obtené sus datos, familia y histórico de viajes.
           </p>
         </div>
-        <button onClick={openNew} className="btn-cta" style={{ height: 44, padding: '0 20px', fontSize: 14 }}>
-          <Plus size={16} /> Nuevo Cliente
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleSync}
+            disabled={syncMutation.isPending}
+            className="btn-secondary"
+            style={{ height: 44, padding: '0 16px', fontSize: 13 }}
+            title="Crea/actualiza fichas de clientes a partir de los presupuestos sin vincular"
+          >
+            {syncMutation.isPending ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+            {syncMutation.isPending ? 'Sincronizando...' : 'Sincronizar desde presupuestos'}
+          </button>
+          <button onClick={openNew} className="btn-cta" style={{ height: 44, padding: '0 20px', fontSize: 14 }}>
+            <Plus size={16} /> Nuevo Cliente
+          </button>
+        </div>
       </div>
 
       {/* Search + refresh */}

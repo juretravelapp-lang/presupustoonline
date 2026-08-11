@@ -10,7 +10,7 @@ import { Step5Contact } from './steps/Step5Contact'
 import { Step6Summary } from './steps/Step6Summary'
 import { useUIStore } from '@/stores/uiStore'
 import { useAuthStore } from '@/stores/authStore'
-import { insertQuote, type InsertQuote } from '@/lib/supabase'
+import { insertQuote, syncClienteFromQuote, updateQuoteCliente, type InsertQuote } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight, Send, Loader2, Check, Plane, Calendar, Users, Sparkles, Mail, FileText } from 'lucide-react'
 import { WIZARD_STEPS, STEP_LABELS } from '@/types/wizard'
@@ -29,8 +29,8 @@ const STEP_ICONS: Record<string, React.ElementType> = {
 }
 
 /* ── Single step circle (desktop & mobile) ──────────────────────── */
-function StepDot({ label, isDone, isCurrent, index, stepKey }: {
-  label: string; isDone: boolean; isCurrent: boolean; index: number; stepKey: string
+function StepDot({ isDone, isCurrent, stepKey }: {
+  isDone: boolean; isCurrent: boolean; stepKey: string
 }) {
   const size = 36
   const Icon = STEP_ICONS[stepKey] || Plane
@@ -157,7 +157,24 @@ export function WizardShell() {
         operador_nombre: isOperatorMode ? authUser.nombre : null,
       }
 
-      await insertQuote(quoteData)
+      const inserted = await insertQuote(quoteData)
+
+      // Alta/actualización automática de la ficha maestra del cliente
+      try {
+        const clienteId = await syncClienteFromQuote({
+          nombre: quoteData.nombre,
+          apellido: quoteData.apellido,
+          dni: quoteData.dni,
+          email: quoteData.email,
+          celular: quoteData.celular,
+        })
+        if (clienteId) {
+          await updateQuoteCliente(inserted.id, clienteId)
+        }
+      } catch (err) {
+        console.error('Error al vincular cliente:', err)
+      }
+
       setSubmitted(true)
       openModal('success')
     } catch (error) {
@@ -275,9 +292,7 @@ export function WizardShell() {
               return (
                 <div key={step} style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
                   <StepDot
-                    index={index}
                     stepKey={step}
-                    label={STEP_LABELS[step as keyof typeof STEP_LABELS]}
                     isDone={isDone}
                     isCurrent={isCurrent}
                   />
@@ -288,7 +303,7 @@ export function WizardShell() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 12 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#fff', m: 0 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0 }}>
               Paso {currentStepIndex + 1} de {WIZARD_STEPS.length}: <span style={{ color: '#D4B87A' }}>{STEP_LABELS[currentStep as keyof typeof STEP_LABELS]}</span>
             </h2>
             <span style={{ fontSize: 13, fontWeight: 600, color: '#7a859b' }}>

@@ -48,6 +48,18 @@ export interface CrmServicio {
   created_at: string
 }
 
+export interface CrmDestino {
+  id: string
+  nombre: string
+  slug: string
+  descripcion: string | null
+  emoji: string | null
+  color: string | null
+  activo: boolean
+  created_at: string
+  updated_at: string
+}
+
 export interface PricingDetalles {
   moneda: 'ARS' | 'USD'
   markup_tipo: 'porcentaje' | 'fijo'
@@ -119,9 +131,11 @@ export async function insertQuote(quote: InsertQuote) {
   const { data, error } = await supabase
     .from('travel_quotes')
     .insert(quote)
+    .select()
+    .single()
 
   if (error) throw error
-  return data
+  return data as TravelQuoteRow
 }
 
 export async function updateQuoteStatus(
@@ -384,4 +398,432 @@ export async function getNextMeetingForQuotes(quoteIds: string[]) {
 
   if (error) throw error
   return data as CrmMeeting[]
+}
+
+// =============================================
+// Message Templates CRUD (crm_message_templates)
+// =============================================
+
+export type FieldWidth = 'third' | 'half' | 'full'
+
+export type TemplateFieldType =
+  | 'text' | 'textarea' | 'number' | 'currency'
+  | 'email' | 'tel' | 'date' | 'time' | 'select'
+
+export interface TemplateFieldDef {
+  key: string
+  label: string
+  type: TemplateFieldType
+  placeholder?: string
+  required?: boolean
+  emoji?: string
+  options?: string[]
+  width: FieldWidth
+}
+
+export interface CrmMessageTemplate {
+  id: string
+  nombre: string
+  slug: string
+  categoria: string
+  emoji: string | null
+  descripcion: string | null
+  is_active: boolean
+  fields: TemplateFieldDef[]
+  mensaje_template: string
+  orden: number
+  created_at: string
+  updated_at: string
+}
+
+export type InsertMessageTemplate = Omit<CrmMessageTemplate, 'id' | 'created_at' | 'updated_at'>
+
+export async function getMessageTemplates(activeOnly = false) {
+  let query = supabase
+    .from('crm_message_templates')
+    .select('*')
+    .order('orden', { ascending: true })
+    .order('nombre', { ascending: true })
+
+  if (activeOnly) query = query.eq('is_active', true)
+
+  const { data, error } = await query
+  if (error) throw error
+  return data as CrmMessageTemplate[]
+}
+
+export async function getMessageTemplateById(id: string) {
+  const { data, error } = await supabase
+    .from('crm_message_templates')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data as CrmMessageTemplate
+}
+
+export async function createMessageTemplate(template: InsertMessageTemplate) {
+  const { data, error } = await supabase
+    .from('crm_message_templates')
+    .insert(template)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as CrmMessageTemplate
+}
+
+export async function updateMessageTemplate(id: string, updates: Partial<CrmMessageTemplate>) {
+  const { data, error } = await supabase
+    .from('crm_message_templates')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as CrmMessageTemplate
+}
+
+export async function deleteMessageTemplate(id: string) {
+  const { error } = await supabase
+    .from('crm_message_templates')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return true
+}
+
+// =============================================
+// Clientes CRUD (clientes + clientes_relaciones)
+// =============================================
+
+export type ClienteTipoRelacion = 'pareja' | 'familia' | 'amigo' | 'otro'
+
+export interface Cliente {
+  id: string
+  nombre: string
+  apellido: string | null
+  dni: string | null
+  email: string | null
+  celular: string | null
+  fecha_nacimiento: string | null
+  pasaporte: string | null
+  direccion: string | null
+  notas: string | null
+  preferencias: Record<string, unknown>
+  creado_por: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type InsertCliente = Pick<
+  Cliente,
+  'nombre' | 'apellido' | 'dni' | 'email' | 'celular' | 'fecha_nacimiento' | 'pasaporte' | 'direccion' | 'notas' | 'preferencias'
+>
+
+export interface ClienteRelacion {
+  id: string
+  cliente_id: string
+  relacionado_id: string
+  tipo: ClienteTipoRelacion
+  nota: string | null
+  created_at: string
+  relacionado?: Cliente
+}
+
+export interface ClienteViaje {
+  id: string
+  cliente_id: string | null
+  nombre: string
+  apellido: string
+  destino: string | null
+  fecha_salida: string | null
+  fecha_regreso: string | null
+  estado: string
+  ticket_id: string | null
+  created_at: string
+}
+
+export async function getClientes() {
+  const { data, error } = await supabase
+    .from('clientes')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data as Cliente[]
+}
+
+export async function crearCliente(data: InsertCliente) {
+  const { data: row, error } = await supabase
+    .from('clientes')
+    .insert(data)
+    .select()
+    .single()
+
+  if (error) throw error
+  return row as Cliente
+}
+
+export async function updateCliente(id: string, updates: Partial<InsertCliente>) {
+  const { data: row, error } = await supabase
+    .from('clientes')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return row as Cliente
+}
+
+export async function deleteCliente(id: string) {
+  const { error } = await supabase
+    .from('clientes')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return true
+}
+
+export async function getRelacionesCliente(clienteId: string) {
+  const { data, error } = await supabase
+    .from('clientes_relaciones')
+    .select(`
+      *,
+      cliente:clientes!clientes_relaciones_cliente_id_fkey (*),
+      relacionado:clientes!clientes_relaciones_relacionado_id_fkey (*)
+    `)
+    .or(`cliente_id.eq.${clienteId},relacionado_id.eq.${clienteId}`)
+
+  if (error) throw error
+  return (data as (ClienteRelacion & { cliente?: Cliente })[]).map((r) => {
+    const other = r.cliente_id === clienteId ? r.relacionado : r.cliente
+    return { ...r, relacionado: other }
+  })
+}
+
+export async function addRelacion(
+  clienteId: string,
+  relacionadoId: string,
+  tipo: ClienteTipoRelacion,
+  nota?: string
+) {
+  const { data, error } = await supabase
+    .from('clientes_relaciones')
+    .insert({
+      cliente_id: clienteId,
+      relacionado_id: relacionadoId,
+      tipo,
+      nota: nota || null,
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as ClienteRelacion
+}
+
+export async function removeRelacion(relacionId: string) {
+  const { error } = await supabase
+    .from('clientes_relaciones')
+    .delete()
+    .eq('id', relacionId)
+
+  if (error) throw error
+  return true
+}
+
+export async function getClientesViajes(clienteId: string) {
+  const { data, error } = await supabase.rpc('get_cliente_viajes', {
+    p_cliente_id: clienteId,
+  })
+
+  if (error) throw error
+  return data as ClienteViaje[]
+}
+
+export async function updateQuoteCliente(quoteId: string, clienteId: string) {
+  const { error } = await supabase
+    .from('travel_quotes')
+    .update({ cliente_id: clienteId, updated_at: new Date().toISOString() })
+    .eq('id', quoteId)
+
+  if (error) throw error
+  return true
+}
+
+/**
+ * Crea o actualiza la ficha maestra del cliente a partir de los datos de una
+ * consulta/presupuesto, buscando coincidencia por dni, email o celular.
+ * Devuelve el id del cliente encontrado/creado (o null si no hay datos).
+ */
+export async function syncClienteFromQuote(person: {
+  nombre: string
+  apellido: string
+  dni?: string | null
+  email?: string | null
+  celular?: string | null
+}): Promise<string | null> {
+  const matchers: string[] = []
+  if (person.dni?.trim()) matchers.push(`dni.eq.${person.dni.trim()}`)
+  if (person.email?.trim()) matchers.push(`email.eq.${person.email.trim()}`)
+  if (person.celular?.trim()) matchers.push(`celular.eq.${person.celular.trim()}`)
+  if (matchers.length === 0) return null
+
+  const { data: existing, error } = await supabase
+    .from('clientes')
+    .select('id')
+    .or(matchers.join(','))
+    .limit(1)
+
+  if (error) throw error
+
+  const payload = {
+    nombre: person.nombre,
+    apellido: person.apellido || '',
+    dni: person.dni?.trim() || null,
+    email: person.email?.trim() || null,
+    celular: person.celular?.trim() || null,
+  }
+
+  if (existing && existing.length > 0) {
+    const { error: updateErr } = await supabase
+      .from('clientes')
+      .update(payload)
+      .eq('id', existing[0].id)
+    if (updateErr) throw updateErr
+    return existing[0].id
+  }
+
+  const { data: created, error: createErr } = await supabase
+    .from('clientes')
+    .insert(payload)
+    .select('id')
+    .single()
+
+  if (createErr) throw createErr
+  return created?.id ?? null
+}
+
+// ── Backfill / sync de clientes desde presupuestos existentes ────────
+
+function normalizeKey(v: string | null | undefined): string {
+  if (!v) return ''
+  return v.toLowerCase().trim()
+}
+
+function normalizeDni(v: string | null | undefined): string {
+  if (!v) return ''
+  return v.replace(/[^0-9]/g, '')
+}
+
+function normalizeCelular(v: string | null | undefined): string {
+  if (!v) return ''
+  let d = v.replace(/[^0-9]/g, '')
+  if (d.length >= 12 && d.startsWith('54')) d = d.slice(2)
+  if (d.length === 11 && d.startsWith('9')) d = d.slice(1)
+  return d
+}
+
+/**
+ * Crea/actualiza fichas de clientes a partir de todos los presupuestos que
+ * aún no tienen cliente_id (match normalizado por dni/email/celular).
+ * Devuelve cuántos clientes se crearon y cuántos presupuestos se vincularon.
+ */
+export async function syncClientesFromQuotes(): Promise<{ creados: number; vinculados: number }> {
+  const { data: quotes, error } = await supabase
+    .from('travel_quotes')
+    .select('id, ticket_id, nombre, apellido, dni, email, celular')
+    .is('cliente_id', null)
+    .limit(500)
+
+  if (error) throw error
+
+  const { data: allClientes, error: errClientes } = await supabase
+    .from('clientes')
+    .select('id, dni, email, celular')
+
+  if (errClientes) throw errClientes
+
+  const clientes: { id: string; dni: string | null; email: string | null; celular: string | null }[] =
+    allClientes as never[]
+
+  let creados = 0
+  let vinculados = 0
+
+  for (const q of quotes as {
+    id: string
+    ticket_id: string | null
+    nombre: string
+    apellido: string | null
+    dni: string | null
+    email: string | null
+    celular: string | null
+  }[]) {
+    const qDni = normalizeDni(q.dni)
+    const qEmail = normalizeKey(q.email)
+    const qCel = normalizeCelular(q.celular)
+    if (!qDni && !qEmail && !qCel) continue
+
+    let match = clientes.find(
+      (c) =>
+        (qDni && normalizeDni(c.dni) === qDni) ||
+        (qEmail && normalizeKey(c.email) === qEmail) ||
+        (qCel && normalizeCelular(c.celular) === qCel)
+    )
+
+    if (!match) {
+      const { data: created, error: cerr } = await supabase
+        .from('clientes')
+        .insert({
+          nombre: q.nombre,
+          apellido: q.apellido || '',
+          dni: q.dni || null,
+          email: q.email || null,
+          celular: q.celular || null,
+          notas: `Creado automáticamente desde el presupuesto ${q.ticket_id || q.id.slice(0, 8)}`,
+        })
+        .select('id, dni, email, celular')
+        .single()
+
+      if (cerr) continue
+      match = created as { id: string; dni: string | null; email: string | null; celular: string | null }
+      clientes.push(match)
+      creados++
+    }
+
+    // Enriquecer campos faltantes del cliente con los del presupuesto
+    const enriquece = {
+      dni: normalizeDni(match.dni) ? match.dni : q.dni,
+      email: normalizeKey(match.email) ? match.email : q.email,
+      celular: normalizeCelular(match.celular) ? match.celular : q.celular,
+    }
+    const hayMejora =
+      (enriquece.dni && !normalizeDni(match.dni)) ||
+      (enriquece.email && !normalizeKey(match.email)) ||
+      (enriquece.celular && !normalizeCelular(match.celular))
+    if (hayMejora) {
+      await supabase
+        .from('clientes')
+        .update({ dni: enriquece.dni || null, email: enriquece.email || null, celular: enriquece.celular || null })
+        .eq('id', match.id)
+      match.dni = enriquece.dni || null
+      match.email = enriquece.email || null
+      match.celular = enriquece.celular || null
+    }
+
+    const { error: lerr } = await supabase
+      .from('travel_quotes')
+      .update({ cliente_id: match.id, updated_at: new Date().toISOString() })
+      .eq('id', q.id)
+
+    if (!lerr) vinculados++
+  }
+
+  return { creados, vinculados }
 }

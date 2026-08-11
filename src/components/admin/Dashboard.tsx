@@ -11,6 +11,10 @@ import { TTOOBoard } from './TTOOBoard'
 import { ServiciosBoard } from './ServiciosBoard'
 import { TTOOVencimientosBoard } from './TTOOVencimientosBoard'
 import { QuoteDetailModal } from './QuoteDetailModal'
+import { ClientesBoard } from './ClientesBoard'
+import { DestinosBoard } from './DestinosBoard'
+import { MessageTemplatesBoard } from './MessageTemplatesBoard'
+import { MessageGenerator } from './MessageGenerator'
 import {
   LayoutDashboard,
   KanbanSquare,
@@ -30,9 +34,12 @@ import {
   Building2,
   ListPlus,
   Wallet,
+  MessageCircleMore,
+  MessageSquareText,
+  Globe,
 } from 'lucide-react'
 
-type AdminView = 'metrics' | 'kanban' | 'meetings' | 'operator_wizard' | 'ttoo' | 'servicios_cat' | 'vencimientos_ttoo'
+type AdminView = 'metrics' | 'kanban' | 'meetings' | 'operator_wizard' | 'ttoo' | 'servicios_cat' | 'destinos_cat' | 'vencimientos_ttoo' | 'clientes' | 'message_templates' | 'message_generator'
 
 export function Dashboard() {
   const { user, logout } = useAuthStore()
@@ -174,6 +181,15 @@ export function Dashboard() {
               <span>Crear Solicitud</span>
             </button>
 
+            <button
+              onClick={() => handleViewChange('clientes')}
+              className={`option-chip ${activeView === 'clientes' ? 'selected' : ''}`}
+              style={{ height: 48, padding: '0 14px' }}
+            >
+              <Users size={18} />
+              <span>Clientes</span>
+            </button>
+
             {user?.role === 'admin' && (
               <>
                 <div style={{ margin: '12px 0 4px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
@@ -196,6 +212,15 @@ export function Dashboard() {
                 >
                   <ListPlus size={18} />
                   <span>Tipos de Servicio</span>
+                </button>
+
+                <button
+                  onClick={() => handleViewChange('destinos_cat')}
+                  className={`option-chip ${activeView === 'destinos_cat' ? 'selected' : ''}`}
+                  style={{ height: 48, padding: '0 14px' }}
+                >
+                  <Globe size={18} />
+                  <span>Destinos Turísticos</span>
                 </button>
 
                 <div style={{ margin: '12px 0 4px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
@@ -221,6 +246,32 @@ export function Dashboard() {
               <CalendarDays size={18} />
               <span>Reuniones</span>
             </button>
+
+            {user?.role === 'admin' && (
+              <>
+                <div style={{ margin: '12px 0 4px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
+                  <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.6)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', paddingLeft: 14 }}>Mensajes</span>
+                </div>
+
+                <button
+                  onClick={() => handleViewChange('message_templates')}
+                  className={`option-chip ${activeView === 'message_templates' ? 'selected' : ''}`}
+                  style={{ height: 48, padding: '0 14px' }}
+                >
+                  <MessageCircleMore size={18} />
+                  <span>Plantillas de Mensaje</span>
+                </button>
+
+                <button
+                  onClick={() => handleViewChange('message_generator')}
+                  className={`option-chip ${activeView === 'message_generator' ? 'selected' : ''}`}
+                  style={{ height: 48, padding: '0 14px' }}
+                >
+                  <MessageSquareText size={18} />
+                  <span>Generador de Mensajes</span>
+                </button>
+              </>
+            )}
 
             {user?.role === 'admin' && (
               <button
@@ -378,6 +429,18 @@ export function Dashboard() {
           <MeetingsBoard />
         )}
 
+        {activeView === 'clientes' && (
+          <ClientesBoard />
+        )}
+
+        {activeView === 'message_templates' && user?.role === 'admin' && (
+          <MessageTemplatesBoard />
+        )}
+
+        {activeView === 'message_generator' && user?.role === 'admin' && (
+          <MessageGenerator />
+        )}
+
         {activeView === 'operator_wizard' && (
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Header info */}
@@ -402,6 +465,10 @@ export function Dashboard() {
 
         {activeView === 'servicios_cat' && user?.role === 'admin' && (
           <ServiciosBoard />
+        )}
+
+        {activeView === 'destinos_cat' && user?.role === 'admin' && (
+          <DestinosBoard />
         )}
 
         {activeView === 'vencimientos_ttoo' && user?.role === 'admin' && (

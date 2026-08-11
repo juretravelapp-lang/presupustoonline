@@ -8,6 +8,7 @@ import {
   deleteCliente,
   addRelacion,
   removeRelacion,
+  syncClientesFromQuotes,
   type InsertCliente,
   type ClienteTipoRelacion,
 } from '@/lib/supabase'
@@ -61,6 +62,14 @@ export function useDeleteCliente() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => deleteCliente(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
+  })
+}
+
+export function useSyncClientes() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: syncClientesFromQuotes,
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   })
 }
