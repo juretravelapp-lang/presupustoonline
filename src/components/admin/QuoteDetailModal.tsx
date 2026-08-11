@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { updateQuoteDetails, getMeetingsForQuote, deleteMeeting, type TravelQuoteRow, type PricingDetalles, type CrmMeeting } from '@/lib/supabase'
 import { MeetingFormModal } from './MeetingFormModal'
 import { useTTOOList, useServiciosList } from '@/hooks/useCatalogQuery'
@@ -195,7 +196,7 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
   }
 
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1000,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -766,6 +767,7 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

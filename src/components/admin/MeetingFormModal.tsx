@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { createMeeting, updateMeeting, deleteMeeting, getQuotes, type CrmMeeting, type TravelQuoteRow } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/authStore'
 import { X, Save, Trash2, Search, Calendar, Clock, Users, Video, Phone, MapPin, Loader2 } from 'lucide-react'
@@ -119,15 +120,15 @@ export function MeetingFormModal({ meeting, preselectedQuoteId, preselectedQuote
     { value: 'reprogramada', label: 'Reprogramada', color: '#60A5FA' },
   ]
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1100,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)', padding: 16,
     }}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         className="glass-card"
         style={{
@@ -421,6 +422,7 @@ export function MeetingFormModal({ meeting, preselectedQuoteId, preselectedQuote
           </div>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   )
 }

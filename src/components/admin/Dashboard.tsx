@@ -156,17 +156,6 @@ export function Dashboard() {
 
           {/* Menu Items */}
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {user?.role === 'admin' && (
-              <button
-                onClick={() => handleViewChange('metrics')}
-                className={`option-chip ${activeView === 'metrics' ? 'selected' : ''}`}
-                style={{ height: 48, padding: '0 14px' }}
-              >
-                <LayoutDashboard size={18} />
-                <span>Métricas</span>
-              </button>
-            )}
-
             <button
               onClick={() => handleViewChange('kanban')}
               className={`option-chip ${activeView === 'kanban' ? 'selected' : ''}`}
@@ -174,15 +163,6 @@ export function Dashboard() {
             >
               <KanbanSquare size={18} />
               <span>Tablero Kanban</span>
-            </button>
-
-            <button
-              onClick={() => handleViewChange('meetings')}
-              className={`option-chip ${activeView === 'meetings' ? 'selected' : ''}`}
-              style={{ height: 48, padding: '0 14px' }}
-            >
-              <CalendarDays size={18} />
-              <span>Reuniones</span>
             </button>
 
             <button
@@ -199,7 +179,7 @@ export function Dashboard() {
                 <div style={{ margin: '12px 0 4px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
                   <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.6)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', paddingLeft: 14 }}>Catálogos</span>
                 </div>
-                
+
                 <button
                   onClick={() => handleViewChange('ttoo')}
                   className={`option-chip ${activeView === 'ttoo' ? 'selected' : ''}`}
@@ -208,7 +188,7 @@ export function Dashboard() {
                   <Building2 size={18} />
                   <span>Operadores TTOO</span>
                 </button>
-                
+
                 <button
                   onClick={() => handleViewChange('servicios_cat')}
                   className={`option-chip ${activeView === 'servicios_cat' ? 'selected' : ''}`}
@@ -231,6 +211,26 @@ export function Dashboard() {
                   <span>Vencimientos TTOO</span>
                 </button>
               </>
+            )}
+
+            <button
+              onClick={() => handleViewChange('meetings')}
+              className={`option-chip ${activeView === 'meetings' ? 'selected' : ''}`}
+              style={{ height: 48, padding: '0 14px' }}
+            >
+              <CalendarDays size={18} />
+              <span>Reuniones</span>
+            </button>
+
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => handleViewChange('metrics')}
+                className={`option-chip ${activeView === 'metrics' ? 'selected' : ''}`}
+                style={{ height: 48, padding: '0 14px' }}
+              >
+                <LayoutDashboard size={18} />
+                <span>Métricas</span>
+              </button>
             )}
           </nav>
         </div>
@@ -269,7 +269,7 @@ export function Dashboard() {
       </aside>
 
       {/* ── Main Content Area ────────────────────────────────────── */}
-      <main className="flex-1 min-h-screen p-4 sm:p-8 pt-20 sm:pt-8" style={{
+      <main className="flex-1 min-h-screen p-4 sm:p-8 pt-20 sm:pt-8 sm:pl-14" style={{
         maxWidth: activeView === 'operator_wizard' ? 760 : '100%',
         margin: activeView === 'operator_wizard' ? '0 auto' : '0',
         overflowX: 'auto',

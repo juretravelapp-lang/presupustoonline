@@ -200,8 +200,8 @@ export function TemplateFormModal({ template, onClose, onSaved }: Props) {
       background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(12px)', padding: 16,
     }}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         className="glass-card"
         style={{
