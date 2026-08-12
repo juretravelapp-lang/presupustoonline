@@ -30,14 +30,18 @@ function money(n: number): string {
 }
 
 export function PagosBoard() {
-  const { data: pagos, isLoading, refetch } = usePagos()
-  const updatePago = useUpdatePago()
-  const deletePago = useDeletePago()
-
   const [estadoFilter, setEstadoFilter] = useState<EstadoFilter>('todos')
   const [monedaFilter, setMonedaFilter] = useState<'todas' | 'ARS' | 'USD'>('todas')
   const [search, setSearch] = useState('')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState('')
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState('')
+
+  const { data: pagos, isLoading, refetch } = usePagos({
+    fecha_desde: filtroFechaDesde || undefined,
+    fecha_hasta: filtroFechaHasta || undefined
+  })
 
   const hoy = new Date().toISOString().slice(0, 10)
 
@@ -70,7 +74,7 @@ export function PagosBoard() {
       .filter((p) => monedaFilter === 'todas' || p.moneda === monedaFilter)
       .filter((p) => {
         if (!q) return true
-        return `${p.cliente_nombre || ''} ${p.ticket_id || ''} ${p.concepto || ''} ${p.estado || ''}`.toLowerCase().includes(q)
+        return `${p.cliente_nombre || ''} ${p.travel_quotes?.nombre || ''} ${p.travel_quotes?.apellido || ''} ${p.ticket_id || p.travel_quotes?.ticket_id || ''} ${p.concepto || ''} ${p.crm_quote_services?.nombre || ''} ${p.estado || ''}`.toLowerCase().includes(q)
       })
       .sort((a, b) => {
         const va = a.fecha_vencimiento || a.created_at
@@ -200,6 +204,26 @@ export function PagosBoard() {
             style={{ height: 38, minHeight: 38, paddingLeft: 34, fontSize: 12, width: '100%' }}
           />
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Desde:</span>
+          <input 
+            type="date" 
+            className="input-dark" 
+            style={{ width: 130, height: 36, fontSize: 12, padding: '0 8px' }} 
+            value={filtroFechaDesde} 
+            onChange={e => setFiltroFechaDesde(e.target.value)} 
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Hasta:</span>
+          <input 
+            type="date" 
+            className="input-dark" 
+            style={{ width: 130, height: 36, fontSize: 12, padding: '0 8px' }} 
+            value={filtroFechaHasta} 
+            onChange={e => setFiltroFechaHasta(e.target.value)} 
+          />
+        </div>
         <button
           onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
           style={{ display: 'flex', alignItems: 'center', gap: 6, height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: '#94A3B8', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
@@ -241,13 +265,15 @@ export function PagosBoard() {
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>{p.cliente_nombre || '—'}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.ticket_id || ''}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>
+                    {p.cliente_nombre || (p.travel_quotes ? `${p.travel_quotes.nombre} ${p.travel_quotes.apellido}` : '—')}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.ticket_id || p.travel_quotes?.ticket_id || ''}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                   <span style={{ fontSize: 12, fontWeight: 600, color: '#CBD5E1' }}>{p.concepto}</span>
                   <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                    {p.forma_pago ? FORMA_LABEL[p.forma_pago] || p.forma_pago : ''}
+                    {p.crm_quote_services?.nombre ? `Servicio: ${p.crm_quote_services.nombre}` : (p.forma_pago ? FORMA_LABEL[p.forma_pago] || p.forma_pago : '')}
                     {p.es_cuota && p.cuota_numero ? ` · Cuota ${p.cuota_numero}${p.cuota_total ? `/${p.cuota_total}` : ''}` : ''}
                   </span>
                 </div>

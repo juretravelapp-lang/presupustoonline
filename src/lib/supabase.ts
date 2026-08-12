@@ -91,24 +91,92 @@ export interface CotizacionDetalles {
   pasajeros?: PasajeroDetalle[]
 }
 
-export interface CrmPago {
+export interface FlightSegment {
+  origen: string
+  destino: string
+  fecha: string
+  hora_salida?: string
+  hora_llegada?: string
+  vuelo?: string
+  aerolinea?: string
+}
+
+export interface FlightDetails {
+  tipo: 'vuelo'
+  pnr?: string
+  tramos: FlightSegment[]
+  pasajeros: string[]
+  observaciones?: string
+}
+
+export interface HotelDetails {
+  tipo: 'hotel'
+  check_in?: string
+  check_out?: string
+  habitacion?: string
+  regimen?: string
+  pasajeros: string[]
+  reserva?: string
+  observaciones?: string
+}
+
+export interface CarRentalDetails {
+  tipo: 'auto'
+  pick_up_lugar?: string
+  pick_up_fecha?: string
+  drop_off_lugar?: string
+  drop_off_fecha?: string
+  conductor?: string
+  categoria?: string
+  reserva?: string
+  observaciones?: string
+}
+
+export type QuoteServiceOperativa = FlightDetails | HotelDetails | CarRentalDetails | any
+
+export interface CrmQuoteService {
   id: string
   quote_id: string
+  servicio_id: string | null
+  nombre: string
+  descripcion: string | null
+  proveedor: string | null
+  precio_total: number
+  moneda: 'ARS' | 'USD'
+  fecha_desde: string | null
+  fecha_hasta: string | null
+  estado: 'cotizado' | 'reservado' | 'confirmado' | 'emitido' | 'cancelado' | 'finalizado'
+  orden: number
+  notas: string | null
+  detalles_operativos: QuoteServiceOperativa
+  created_at: string
+  updated_at: string
+}
+
+export type InsertQuoteService = Omit<CrmQuoteService, 'id' | 'created_at' | 'updated_at'>
+export type UpdateQuoteService = Partial<InsertQuoteService>
+
+export interface CrmPago {
+  id: string
+  created_at: string
+  quote_id: string
+  quote_service_id: string | null
   cliente_id: string | null
   ticket_id: string | null
   cliente_nombre: string | null
   concepto: string
   moneda: 'ARS' | 'USD'
   monto: number
-  forma_pago: string | null
+  forma_pago: string
   fecha_pago: string | null
   fecha_vencimiento: string | null
   estado: 'pendiente' | 'pagado' | 'cancelado'
+  notas: string | null
   es_cuota: boolean
   cuota_numero: number | null
   cuota_total: number | null
-  notas: string | null
-  created_at: string
+  crm_quote_services?: { nombre: string }
+  travel_quotes?: { nombre: string, apellido: string, ticket_id: string }
   updated_at: string
 }
 
@@ -222,6 +290,10 @@ export async function deleteQuote(id: string) {
 export async function getQuotes(filters?: {
   status?: string
   search?: string
+  fecha_desde?: string
+  fecha_hasta?: string
+  operador?: string
+  destino?: string
   limit?: number
   offset?: number
 }) {
@@ -232,6 +304,25 @@ export async function getQuotes(filters?: {
 
   if (filters?.status) {
     query = query.eq('estado', filters.status)
+  }
+
+  if (filters?.fecha_desde) {
+    query = query.gte('created_at', filters.fecha_desde)
+  }
+
+  if (filters?.fecha_hasta) {
+    // Add 1 day to include the whole end date
+    const toDate = new Date(filters.fecha_hasta)
+    toDate.setDate(toDate.getDate() + 1)
+    query = query.lt('created_at', toDate.toISOString())
+  }
+
+  if (filters?.operador) {
+    query = query.ilike('operador_nombre', `%${filters.operador}%`)
+  }
+
+  if (filters?.destino) {
+    query = query.or(`destino.ilike.%${filters.destino}%,destino_personalizado.ilike.%${filters.destino}%`)
   }
 
   if (filters?.search) {
@@ -877,12 +968,21 @@ function mapPago(p: CrmPago): CrmPago {
   return { ...p, monto: Number(p.monto) }
 }
 
-export async function getPagos() {
-  const { data, error } = await supabase
+export async function getPagos(filters?: { fecha_desde?: string, fecha_hasta?: string }) {
+  let query = supabase
     .from('crm_pagos')
-    .select('*')
+    .select('*, crm_quote_services(nombre), travel_quotes(nombre, apellido, ticket_id)')
     .order('fecha_vencimiento', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false })
+
+  if (filters?.fecha_desde) {
+    query = query.gte('fecha_vencimiento', filters.fecha_desde)
+  }
+  if (filters?.fecha_hasta) {
+    query = query.lte('fecha_vencimiento', filters.fecha_hasta)
+  }
+
+  const { data, error } = await query
 
   if (error) throw error
   return (data as CrmPago[]).map(mapPago)
@@ -925,6 +1025,59 @@ export async function updatePago(id: string, updates: Partial<InsertPago>) {
 export async function deletePago(id: string) {
   const { error } = await supabase
     .from('crm_pagos')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+  return true
+}
+
+// =============================================
+// Quote Services CRUD (crm_quote_services)
+// =============================================
+
+function mapQuoteService(s: CrmQuoteService): CrmQuoteService {
+  return { ...s, precio_total: Number(s.precio_total) }
+}
+
+export async function getQuoteServices(quoteId: string) {
+  const { data, error } = await supabase
+    .from('crm_quote_services')
+    .select('*')
+    .eq('quote_id', quoteId)
+    .order('orden', { ascending: true })
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return (data as CrmQuoteService[]).map(mapQuoteService)
+}
+
+export async function createQuoteService(data: InsertQuoteService) {
+  const { data: row, error } = await supabase
+    .from('crm_quote_services')
+    .insert({ ...data, precio_total: Number(data.precio_total) })
+    .select()
+    .single()
+
+  if (error) throw error
+  return mapQuoteService(row as CrmQuoteService)
+}
+
+export async function updateQuoteService(id: string, updates: Partial<InsertQuoteService>) {
+  const { data: row, error } = await supabase
+    .from('crm_quote_services')
+    .update({ ...updates, precio_total: updates.precio_total !== undefined ? Number(updates.precio_total) : undefined })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return mapQuoteService(row as CrmQuoteService)
+}
+
+export async function deleteQuoteService(id: string) {
+  const { error } = await supabase
+    .from('crm_quote_services')
     .delete()
     .eq('id', id)
 

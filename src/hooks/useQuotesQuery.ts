@@ -14,7 +14,16 @@ export const queryKeys = {
 // QUERIES
 // ----------------------
 
-export function useQuotesList(filters?: { status?: string; search?: string; limit?: number; offset?: number }) {
+export function useQuotesList(filters?: { 
+  status?: string; 
+  search?: string; 
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  operador?: string;
+  destino?: string;
+  limit?: number; 
+  offset?: number 
+}) {
   return useQuery({
     queryKey: queryKeys.quotesList(filters),
     queryFn: () => supabaseService.getQuotes(filters),

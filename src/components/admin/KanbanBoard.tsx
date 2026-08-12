@@ -38,8 +38,20 @@ export function KanbanBoard() {
   // Mobile active column view (only used on mobile viewports)
   const [activeMobileCol, setActiveMobileCol] = useState<TravelQuoteRow['estado']>('no_cotizado')
 
+  // DB Filters
+  const [filtroOperador, setFiltroOperador] = useState('')
+  const [filtroDestino, setFiltroDestino] = useState('')
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState('')
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState('')
+
   /* ── Fetch data ─────────────────────────────────────────────── */
-  const { data: quotesData, isLoading, refetch } = useQuotesList({ limit: 100 })
+  const { data: quotesData, isLoading, refetch } = useQuotesList({ 
+    limit: 100,
+    operador: filtroOperador || undefined,
+    destino: filtroDestino || undefined,
+    fecha_desde: filtroFechaDesde || undefined,
+    fecha_hasta: filtroFechaHasta || undefined
+  })
   const quotes = quotesData?.data || []
 
   const updateStatusMutation = useUpdateQuoteStatus()
@@ -223,6 +235,46 @@ export function KanbanBoard() {
           >
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
           </button>
+        </div>
+      </div>
+
+      {/* Advanced Filters (Backend) */}
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+        <input 
+          type="text" 
+          placeholder="Operador (BD)" 
+          className="input-dark" 
+          style={{ width: 150, height: 36, fontSize: 12 }} 
+          value={filtroOperador} 
+          onChange={e => setFiltroOperador(e.target.value)} 
+        />
+        <input 
+          type="text" 
+          placeholder="Destino (BD)" 
+          className="input-dark" 
+          style={{ width: 150, height: 36, fontSize: 12 }} 
+          value={filtroDestino} 
+          onChange={e => setFiltroDestino(e.target.value)} 
+        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Desde:</span>
+          <input 
+            type="date" 
+            className="input-dark" 
+            style={{ width: 130, height: 36, fontSize: 12, padding: '0 8px' }} 
+            value={filtroFechaDesde} 
+            onChange={e => setFiltroFechaDesde(e.target.value)} 
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>Hasta:</span>
+          <input 
+            type="date" 
+            className="input-dark" 
+            style={{ width: 130, height: 36, fontSize: 12, padding: '0 8px' }} 
+            value={filtroFechaHasta} 
+            onChange={e => setFiltroFechaHasta(e.target.value)} 
+          />
         </div>
       </div>
 

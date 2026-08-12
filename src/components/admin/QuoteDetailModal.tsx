@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { updateQuoteDetails, getMeetingsForQuote, deleteMeeting, type TravelQuoteRow, type PricingDetalles, type CrmMeeting } from '@/lib/supabase'
 import { MeetingFormModal } from './MeetingFormModal'
+import { QuoteBuilderTab } from './QuoteBuilderTab'
 import { QuoteCotizacionTab } from './QuoteCotizacionTab'
 import { QuotePagosTab } from './QuotePagosTab'
 import { useTTOOList, useServiciosList } from '@/hooks/useCatalogQuery'
@@ -251,9 +252,9 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
           {([
             { id: 'general', label: 'Detalles del Viaje', icon: FileText },
             { id: 'agenda',  label: 'Cita y Agenda CRM', icon: Calendar },
-            { id: 'cotizacion', label: 'Detalle de Cotización', icon: ClipboardList },
-            { id: 'pagos', label: 'Pagos', icon: CreditCard },
-            { id: 'pricing', label: 'Calculadora Precios', icon: DollarSign },
+            { id: 'cotizacion', label: 'Constructor de Cotización', icon: ClipboardList },
+            { id: 'pagos', label: 'Pagos Globales', icon: CreditCard },
+            { id: 'pricing', label: 'Legacy Pricing', icon: DollarSign },
           ] as const).map(tab => {
             const isActive = activeTab === tab.id
             return (
@@ -556,9 +557,9 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
             </div>
           )}
 
-          {/* ─── TAB 4: Detalle de Cotización ─────────────────────── */}
+          {/* ─── TAB 3: Cotización (Constructor) ───────────────────────── */}
           {activeTab === 'cotizacion' && (
-            <QuoteCotizacionTab quote={quote} />
+            <QuoteBuilderTab quote={quote} />
           )}
 
           {/* ─── TAB 5: Pagos ─────────────────────────────────────── */}

@@ -10,8 +10,11 @@ import {
 
 const KEY = 'pagos'
 
-export function usePagos() {
-  return useQuery({ queryKey: [KEY], queryFn: getPagos })
+export function usePagos(filters?: { fecha_desde?: string, fecha_hasta?: string }) {
+  return useQuery({ 
+    queryKey: [KEY, filters], 
+    queryFn: () => getPagos(filters) 
+  })
 }
 
 export function usePagosByQuote(quoteId: string) {
