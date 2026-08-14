@@ -23,9 +23,7 @@ const HERO_BG = '/assets/images/promos/banner1.webp'
 function getDestinoEmoji(destino: string): string {
   const normalized = destino.toLowerCase().trim()
   if (DESTINO_FLAGS[normalized]) return DESTINO_FLAGS[normalized]
-  const popular = DESTINOS_POPULARES.find(d => d.value === normalized)
-  if (popular) return popular.emoji
-  return '🌍'
+  return '📍'
 }
 
 function formatDestinos(destinos: string[]): string {

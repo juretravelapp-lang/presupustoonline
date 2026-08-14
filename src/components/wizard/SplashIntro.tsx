@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { ChevronRight } from 'lucide-react'
 import logoImg from '@/assets/img/logo/logo.jpg'

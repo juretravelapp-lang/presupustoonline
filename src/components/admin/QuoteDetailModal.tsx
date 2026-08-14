@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { updateQuoteDetails, getMeetingsForQuote, deleteMeeting, type TravelQuoteRow, type PricingDetalles, type CrmMeeting } from '@/lib/supabase'
 import { MeetingFormModal } from './MeetingFormModal'
 import { QuoteBuilderTab } from './QuoteBuilderTab'
-import { QuoteCotizacionTab } from './QuoteCotizacionTab'
+
 import { QuotePagosTab } from './QuotePagosTab'
 import { useTTOOList, useServiciosList } from '@/hooks/useCatalogQuery'
 import { X, Calendar, DollarSign, FileText, Printer, Save, Clock, Plus, Trash2, MapPin, Video, Phone, Loader2, ClipboardList, CreditCard } from 'lucide-react'

@@ -13,11 +13,10 @@ import {
 
 interface QuoteServiceEditorProps {
   quoteService: CrmQuoteService
-  catalog: CrmServicio[]
   onUpdate: (srv: CrmQuoteService) => void
 }
 
-export function QuoteServiceEditor({ quoteService, catalog, onUpdate }: QuoteServiceEditorProps) {
+export function QuoteServiceEditor({ quoteService, onUpdate }: QuoteServiceEditorProps) {
   const [srv, setSrv] = useState<CrmQuoteService>(quoteService)
   const [pagos, setPagos] = useState<CrmPago[]>([])
   const [saving, setSaving] = useState(false)
@@ -188,7 +187,7 @@ export function QuoteServiceEditor({ quoteService, catalog, onUpdate }: QuoteSer
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {pagos.map((p, i) => (
+            {pagos.map((p) => (
               <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr auto', gap: 8, alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: 12, borderRadius: 8 }}>
                 <input className="input-dark" value={p.concepto} onChange={e => handleUpdatePago(p.id, 'concepto', e.target.value)} placeholder="Concepto" />
                 <div style={{ display: 'flex', gap: 4 }}>

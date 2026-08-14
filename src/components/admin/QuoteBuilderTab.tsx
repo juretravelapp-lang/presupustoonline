@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit, ChevronDown, ChevronUp, Plane, Car, Hotel, Map, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Edit, Plane, Car, Hotel, Map, Loader2 } from 'lucide-react'
 import {
   type TravelQuoteRow,
   type CrmQuoteService,

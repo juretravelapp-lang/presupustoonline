@@ -135,6 +135,7 @@ export function QuotePagosTab({ quote }: QuotePagosTabProps) {
         cuota_numero: form.es_cuota && form.cuota_numero ? Number(form.cuota_numero) : null,
         cuota_total: form.es_cuota && form.cuota_total ? Number(form.cuota_total) : null,
         notas: form.notas || null,
+        quote_service_id: null,
       }
       if (editing) {
         await updatePago.mutateAsync({ id: editing.id, updates: payload })

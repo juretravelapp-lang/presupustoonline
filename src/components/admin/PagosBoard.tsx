@@ -42,6 +42,8 @@ export function PagosBoard() {
     fecha_desde: filtroFechaDesde || undefined,
     fecha_hasta: filtroFechaHasta || undefined
   })
+  const updatePago = useUpdatePago()
+  const deletePago = useDeletePago()
 
   const hoy = new Date().toISOString().slice(0, 10)
 

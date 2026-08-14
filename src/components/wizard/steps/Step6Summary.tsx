@@ -130,7 +130,7 @@ export function Step6Summary() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {destinos.map(d => (
                 <span key={d!.value} className="chip-tag" style={{ fontSize: 12, padding: '6px 14px' }}>
-                  {d!.emoji} {d!.label}
+                  📍 {d!.label}
                 </span>
               ))}
               {data.destination.destino_personalizado && (
