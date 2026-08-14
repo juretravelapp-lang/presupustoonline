@@ -8,7 +8,7 @@ export function Header() {
     <header
       className="sticky top-0 z-50 safe-area-top"
       style={{
-        background: 'rgba(10,21,38,0.96)',
+        background: 'rgba(4,18,36,0.96)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -26,16 +26,18 @@ export function Header() {
       >
         {/* Logo + Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img
-            src={logoImg}
-            alt="Travel Jure"
-            style={{ height: 30, width: 30, borderRadius: 8, objectFit: 'contain', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
-          />
+          <div style={{ background: '#fff', padding: 3, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+            <img
+              src={logoImg}
+              alt="Travel Jure"
+              style={{ height: 26, width: 26, objectFit: 'contain' }}
+            />
+          </div>
           <div>
             <h1 style={{ fontSize: 15, fontWeight: 800, color: '#F0F4FF', letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'var(--font-display)' }}>
               JURE TRAVEL
             </h1>
-            <p style={{ fontSize: 10, color: 'rgba(201,169,110,0.8)', fontWeight: 600, marginTop: 1 }}>
+            <p style={{ fontSize: 10, color: 'rgba(255,107,0,0.8)', fontWeight: 600, marginTop: 1 }}>
               Presupuesto personalizado
             </p>
           </div>
@@ -49,19 +51,19 @@ export function Header() {
           style={{
             fontSize: 13,
             fontWeight: 700,
-            color: '#C9A96E',
+            color: '#FF6B00',
             textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
             gap: 6,
             padding: '6px 14px',
-            background: 'rgba(201,169,110,0.1)',
-            border: '1px solid rgba(201,169,110,0.25)',
+            background: 'rgba(255,107,0,0.1)',
+            border: '1px solid rgba(255,107,0,0.25)',
             borderRadius: 999,
             transition: 'all 0.2s',
           }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,169,110,0.18)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(201,169,110,0.1)')}
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,107,0,0.18)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,107,0,0.1)')}
           title="Contactar por WhatsApp"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">

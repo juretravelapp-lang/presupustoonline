@@ -9,18 +9,18 @@ export const CIUDADES_SALIDA = [
 ] as const
 
 export const DESTINOS_POPULARES = [
-  { value: 'punta_cana',     label: 'Punta Cana',        emoji: '🌊', color: '#CE1126' },
-  { value: 'cancun',         label: 'Cancún',            emoji: '🏖️', color: '#006847' },
-  { value: 'playa_del_carmen', label: 'Playa del Carmen', emoji: '🌴', color: '#006847' },
-  { value: 'aruba',          label: 'Aruba',             emoji: '🦩', color: '#0072C6' },
-  { value: 'curazao',        label: 'Curazao',           emoji: '🐠', color: '#002B7F' },
-  { value: 'rio_de_janeiro', label: 'Río de Janeiro',    emoji: '⛰️', color: '#009739' },
-  { value: 'norte_brasil',   label: 'Norte de Brasil',   emoji: '🥥', color: '#009739' },
-  { value: 'usa',            label: 'USA',               emoji: '🗽', color: '#B22234' },
-  { value: 'disney',         label: 'Disney',            emoji: '✨', color: '#1E3A5F' },
-  { value: 'europa',         label: 'Europa',            emoji: '🏰', color: '#003399' },
-  { value: 'cruceros',       label: 'Cruceros',          emoji: '🚢', color: '#0077B6' },
-  { value: 'otro',           label: 'Otros destinos',    emoji: '🗺️', color: '#64748B' },
+  { value: 'punta_cana',     label: 'Punta Cana',        image: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=600&auto=format&fit=crop' },
+  { value: 'cancun',         label: 'Cancún',            image: 'https://images.unsplash.com/photo-1552074284-5e88ef1aef18?q=80&w=600&auto=format&fit=crop' },
+  { value: 'playa_del_carmen', label: 'Playa del Carmen', image: 'https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=600&auto=format&fit=crop' },
+  { value: 'aruba',          label: 'Aruba',             image: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=600&auto=format&fit=crop' },
+  { value: 'curazao',        label: 'Curazao',           image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop' },
+  { value: 'rio_de_janeiro', label: 'Río de Janeiro',    image: 'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?q=80&w=600&auto=format&fit=crop' },
+  { value: 'norte_brasil',   label: 'Norte de Brasil',   image: 'https://images.unsplash.com/photo-1533038590840-1cbea976a47a?q=80&w=600&auto=format&fit=crop' },
+  { value: 'usa',            label: 'USA',               image: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?q=80&w=600&auto=format&fit=crop' },
+  { value: 'disney',         label: 'Disney',            image: 'https://images.unsplash.com/photo-1522055662706-5384bc1d8892?q=80&w=600&auto=format&fit=crop' },
+  { value: 'europa',         label: 'Europa',            image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop' },
+  { value: 'cruceros',       label: 'Cruceros',          image: 'https://images.unsplash.com/photo-1548574505-5e239809ee19?q=80&w=600&auto=format&fit=crop' },
+  { value: 'otro',           label: 'Otros destinos',    image: 'https://images.unsplash.com/photo-1488085061387-422e29b40080?q=80&w=600&auto=format&fit=crop' },
 ] as const
 
 export const TIPOS_FECHA = [

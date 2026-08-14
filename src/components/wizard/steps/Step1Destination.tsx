@@ -154,15 +154,34 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
                 onClick={() => toggleDestino(destino.value)}
                 style={{
                   position: 'relative',
-                  display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start',
-                  padding: '16px', borderRadius: 16,
-                  border: isSelected ? '1px solid #34D399' : '1px solid rgba(255,255,255,0.05)',
-                  background: isSelected ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.02)',
-                  boxShadow: isSelected ? '0 0 20px rgba(52,211,153,0.12)' : 'none',
+                  display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'flex-start',
+                  padding: '12px 14px', borderRadius: 14,
+                  minHeight: 110,
+                  border: isSelected ? '2px solid #FF6B00' : '1px solid rgba(255,255,255,0.05)',
+                  boxShadow: isSelected ? '0 0 15px rgba(255,107,0,0.4)' : 'none',
+                  overflow: 'hidden',
                   cursor: 'pointer', transition: 'all 0.2s',
                   textAlign: 'left'
                 }}
               >
+                {/* Background Image */}
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  backgroundImage: `url(${destino.image})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  zIndex: 0,
+                  filter: isSelected ? 'brightness(0.9) saturate(1.2)' : 'brightness(0.5) saturate(0.8)',
+                  transition: 'all 0.2s'
+                }} />
+                
+                {/* Subtle gradient to ensure text readability */}
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 60%)',
+                  zIndex: 0
+                }} />
+
                 <AnimatePresence>
                   {isSelected && (
                     <motion.span
@@ -171,18 +190,26 @@ export const Step1Destination = forwardRef<StepHandle>(function Step1Destination
                       exit={{ scale: 0, opacity: 0 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 22 }}
                       style={{
-                        position: 'absolute', top: 12, right: 12,
+                        position: 'absolute', top: 8, right: 8,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         width: 22, height: 22, borderRadius: '50%',
-                        background: '#34D399', color: '#0A1526',
+                        background: '#FF6B00', color: '#041224',
+                        zIndex: 2
                       }}
                     >
-                      <Check size={14} strokeWidth={3.5} />
+                      <Check size={14} strokeWidth={4} />
                     </motion.span>
                   )}
                 </AnimatePresence>
-                <span style={{ fontSize: 24 }}>{destino.emoji}</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: isSelected ? '#6EE7B7' : '#fff' }}>{destino.label}</span>
+                
+                <span style={{ 
+                  position: 'relative', zIndex: 1, 
+                  fontSize: 14, fontWeight: 800, 
+                  color: '#fff', 
+                  textShadow: '0 2px 8px rgba(0,0,0,0.9)'
+                }}>
+                  {destino.label}
+                </span>
               </button>
             )
           })}

@@ -99,5 +99,4 @@ export const WIZARD_STEPS: WizardStep[] = [
   'passengers',
   'preferences',
   'contact',
-  'summary',
 ]

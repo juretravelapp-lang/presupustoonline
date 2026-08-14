@@ -42,10 +42,10 @@ function StepDot({ isDone, isCurrent, stepKey }: {
         style={{
           width: size, height: size, borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: isDone ? '#2d3345' : isCurrent ? '#D4B87A' : '#1e2433',
-          border: isCurrent ? '2px solid rgba(212,184,122,0.3)' : '1px solid rgba(255,255,255,0.05)',
-          color: isDone ? '#5e687e' : isCurrent ? '#0A1526' : '#384152',
-          boxShadow: isCurrent ? '0 0 15px rgba(212,184,122,0.3)' : 'none',
+          background: isDone ? '#2d3345' : isCurrent ? '#FF6B00' : '#1e2433',
+          border: isCurrent ? '2px solid rgba(255,107,0,0.3)' : '1px solid rgba(255,255,255,0.05)',
+          color: isDone ? '#5e687e' : isCurrent ? '#041224' : '#384152',
+          boxShadow: isCurrent ? '0 0 15px rgba(255,107,0,0.3)' : 'none',
           transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
           zIndex: 2,
         }}
@@ -64,7 +64,7 @@ function ProgressLine({ done }: { done: boolean }) {
         initial={{ width: '0%' }}
         animate={{ width: done ? '100%' : '0%' }}
         transition={{ duration: 0.4, ease: [0.16,1,0.3,1] }}
-        style={{ height: '100%', background: '#D4B87A' }}
+        style={{ height: '100%', background: '#FF6B00' }}
       />
     </div>
   )
@@ -101,6 +101,12 @@ export function WizardShell() {
 
   /* ── Submit ──────────────────────────────────────────────────── */
   const handleSubmit = useCallback(async () => {
+    // Validar el paso final antes de enviar (ej. Paso de contacto)
+    if (stepRef.current) {
+      const isValid = await stepRef.current.validate()
+      if (!isValid) return
+    }
+
     setSubmitting(true)
     try {
       const destinosSeleccionados = data.destination.destinos_seleccionados || []
@@ -222,7 +228,7 @@ export function WizardShell() {
       </AnimatePresence>
       <div className="min-h-screen pb-32 sm:pb-28"
         style={{
-          background: 'linear-gradient(160deg, #0A1526 0%, #0F1E35 45%, #0D2040 100%)',
+          background: 'linear-gradient(160deg, #041224 0%, #0A1D36 45%, #08172D 100%)',
         }}
       >
       <a href="#wizard-content" className="skip-link">Saltar al formulario</a>
@@ -237,11 +243,11 @@ export function WizardShell() {
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)',
-              zIndex: 9999, background: '#C9A96E', color: '#0A1526',
+              zIndex: 9999, background: '#FF6B00', color: '#041224',
               padding: '10px 24px', borderRadius: 999,
               display: 'flex', alignItems: 'center', gap: 8,
               fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap',
-              boxShadow: '0 8px 24px rgba(201,169,110,0.35)',
+              boxShadow: '0 8px 24px rgba(255,107,0,0.35)',
             }}
           >
             <Check size={16} strokeWidth={3} />
@@ -259,7 +265,7 @@ export function WizardShell() {
             exit={{ opacity: 0 }}
             style={{
               position: 'fixed', inset: 0, zIndex: 99999,
-              background: 'rgba(10,21,38,0.92)', backdropFilter: 'blur(12px)',
+              background: 'rgba(4,18,36,0.92)', backdropFilter: 'blur(12px)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -268,8 +274,8 @@ export function WizardShell() {
               transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
               style={{
                 width: 44, height: 44, borderRadius: '50%',
-                border: '3px solid rgba(201,169,110,0.15)',
-                borderTopColor: '#C9A96E', marginBottom: 20,
+                border: '3px solid rgba(255,107,0,0.15)',
+                borderTopColor: '#FF6B00', marginBottom: 20,
               }}
             />
             <p style={{ fontSize: 16, fontWeight: 600, color: '#F0F4FF' }}>
@@ -282,7 +288,7 @@ export function WizardShell() {
       {/* ── Step progress bar ──────────────────────────────────── */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 40,
-        background: '#0A1526', // Solid dark background for the header
+        background: '#041224', // Solid dark background for the header
       }}>
         <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -304,7 +310,7 @@ export function WizardShell() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 12 }}>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0 }}>
-              Paso {currentStepIndex + 1} de {WIZARD_STEPS.length}: <span style={{ color: '#D4B87A' }}>{STEP_LABELS[currentStep as keyof typeof STEP_LABELS]}</span>
+              Paso {currentStepIndex + 1} de {WIZARD_STEPS.length}: <span style={{ color: '#FF6B00' }}>{STEP_LABELS[currentStep as keyof typeof STEP_LABELS]}</span>
             </h2>
             <span style={{ fontSize: 13, fontWeight: 600, color: '#7a859b' }}>
               {Math.round(((currentStepIndex) / WIZARD_STEPS.length) * 100)}% completado
@@ -339,69 +345,85 @@ export function WizardShell() {
           </StepWrapper>
         </motion.div>
 
-        {/* ── Navigation ───────────────────────────────────── */}
+        {/* ── Navigation (Sticky Bottom) ─────────────────────── */}
         <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginTop: 24, paddingBottom: 40
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          background: 'rgba(4, 18, 36, 0.95)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+          padding: '16px 20px',
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+          display: 'flex', justifyContent: 'center',
+          zIndex: 50,
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.3)'
         }}>
-          <div>
-            {currentStepIndex > 0 ? (
-              <button
-                onClick={handlePrev}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '12px 20px', background: 'transparent',
-                  color: '#fff', fontWeight: 700, fontSize: 14,
-                  border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12,
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
-              >
-                <ArrowLeft size={16} /> Atrás
-              </button>
-            ) : (
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#D4B87A' }}>
-                Armá tu viaje A medida
-              </span>
-            )}
-          </div>
-          <div>
-            {isLastStep ? (
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '14px 28px', background: '#D4B87A',
-                  color: '#0A1526', fontWeight: 800, fontSize: 15,
-                  border: 'none', borderRadius: 12,
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  opacity: isSubmitting ? 0.7 : 1,
-                  transition: 'all 0.15s',
-                }}
-              >
-                {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                {isSubmitting ? 'Enviando...' : 'Enviar solicitud'}
-              </button>
-            ) : (
-              <button
-                onClick={handleValidate}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '14px 28px', background: '#D4B87A',
-                  color: '#0A1526', fontWeight: 800, fontSize: 15,
-                  border: 'none', borderRadius: 12,
-                  cursor: 'pointer', transition: 'all 0.15s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#e6c886' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#D4B87A' }}
-              >
-                Siguiente <ArrowRight size={18} />
-              </button>
-            )}
+          <div style={{ 
+            width: '100%', maxWidth: 720, margin: '0 auto', 
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center' 
+          }}>
+            <div>
+              {currentStepIndex > 0 ? (
+                <button
+                  onClick={handlePrev}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '12px 20px', background: 'transparent',
+                    color: '#fff', fontWeight: 700, fontSize: 14,
+                    border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12,
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
+                >
+                  <ArrowLeft size={16} /> Atrás
+                </button>
+              ) : (
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#FF6B00' }}>
+                  Armá tu viaje
+                </span>
+              )}
+            </div>
+            <div>
+              {isLastStep ? (
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '14px 28px', background: '#FF6B00',
+                    color: '#041224', fontWeight: 800, fontSize: 15,
+                    border: 'none', borderRadius: 12,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: isSubmitting ? 0.7 : 1,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                  {isSubmitting ? 'Enviando...' : 'Enviar solicitud'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleValidate}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '14px 28px', background: '#FF6B00',
+                    color: '#041224', fontWeight: 800, fontSize: 15,
+                    border: 'none', borderRadius: 12,
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#FF8533' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#FF6B00' }}
+                >
+                  Siguiente <ArrowRight size={18} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
+        
+        {/* Spacer to prevent content from hiding behind the fixed bottom bar */}
+        <div style={{ height: 100 }} />
 
         {/* Trust signals */}
         <motion.div
@@ -418,7 +440,7 @@ export function WizardShell() {
               fontSize: 11, color: 'rgba(100,116,139,0.5)', fontWeight: 500,
               display: 'flex', alignItems: 'center', gap: 5,
             }}>
-              <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#C9A96E', display: 'inline-block' }} />
+              <span style={{ width: 3, height: 3, borderRadius: '50%', background: '#FF6B00', display: 'inline-block' }} />
               {text}
             </span>
           ))}
