@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Save, Loader2, Plus, Trash2 } from 'lucide-react'
 import {
   type CrmQuoteService,
-  type CrmServicio,
+
   type CrmPago,
   updateQuoteService,
   getPagosByQuote,

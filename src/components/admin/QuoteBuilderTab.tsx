@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Edit, Plane, Car, Hotel, Map, Loader2 } from 'lucide-react'
+import { Plus, Trash2, Edit, ChevronUp, Plane, Car, Hotel, Map, Loader2 } from 'lucide-react'
 import {
   type TravelQuoteRow,
   type CrmQuoteService,
@@ -145,8 +145,7 @@ export function QuoteBuilderTab({ quote }: QuoteBuilderTabProps) {
             {editingId === srv.id && (
               <div style={{ padding: 16, borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.1)' }}>
                 <QuoteServiceEditor 
-                  quoteService={srv} 
-                  catalog={catalog}
+                  quoteService={srv}
                   onUpdate={(updated) => setServices(services.map(s => s.id === updated.id ? updated : s))} 
                 />
               </div>
