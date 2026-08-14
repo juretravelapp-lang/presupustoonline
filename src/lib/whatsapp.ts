@@ -39,31 +39,32 @@ export function generateWhatsAppMessage(data: QuoteData): string {
     fechasText = `• Mes preferido: ${data.mes_preferido || 'No especificado'}`
   }
 
-const mensaje = `*NUEVA SOLICITUD DE VIAJE*
-━━━━━━━━━━━━━━━━━━━━
-Ticket: ${data.ticket_id}
+const mensaje = `¡Hola equipo de Jure Travel! 👋
+Quisiera solicitar un presupuesto a medida para mi próximo viaje. Aquí les dejo mis detalles:
 
-👤 *DATOS PERSONALES*
+🎫 *Ticket:* #${data.ticket_id}
+
+👤 *Mis Datos*
 • Nombre: ${data.nombre} ${data.apellido}
 • DNI: ${data.dni}
 • Email: ${data.email || 'No proporcionado'}
 • Celular: ${data.celular}
 
-✈️ *VIAJE*
-• Origen: ${data.ciudad_salida || 'No especificada'}
-• Destino: ${data.destino}${data.destino_personalizado ? ` (${data.destino_personalizado})` : ''}
+✈️ *El Viaje*
+• De: ${data.ciudad_salida || 'No especificada'}
+• A: ${data.destino}${data.destino_personalizado ? ` (${data.destino_personalizado})` : ''}
 • Tipo de fecha: ${data.tipo_fecha.replace(/_/g, ' ')}
 ${fechasText}
 
-👥 *PASAJEROS*
+👥 *Pasajeros*
 • Adultos: ${data.adultos}${data.edades_adultos ? ` (Edades: ${data.edades_adultos})` : ''}
 • Niños (2 a 11 años): ${data.ninos_2_12}
 • Bebés (0 a 2 años): ${data.bebes_0_2}
 
-✨ *SERVICIOS*
+✨ *Servicios de interés*
 ${preferenciasText}
 
-💬 *COMENTARIOS*
+💬 *Comentarios extra*
 ${data.comentarios || 'Sin comentarios'}
 
 📅 Fecha de solicitud: ${new Date().toLocaleDateString('es-AR')} ${new Date().toLocaleTimeString('es-AR')}
