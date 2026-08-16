@@ -83,6 +83,7 @@ export function WizardShell() {
   const stepRef = useRef<StepHandle>(null)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [swipeOffset, setSwipeOffset] = useState(0)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   /* ── Navigation ─────────────────────────────────────────────── */
   const handleValidate = useCallback(async () => {
@@ -108,6 +109,7 @@ export function WizardShell() {
     }
 
     setSubmitting(true)
+    setSubmitError(null)
     try {
       const destinosSeleccionados = data.destination.destinos_seleccionados || []
       const destinosCustom = data.destination.destinos_custom || []
@@ -185,7 +187,9 @@ export function WizardShell() {
       openModal('success')
     } catch (error) {
       console.error('Error saving quote:', error)
-      alert('Error al guardar: ' + (error as Error).message)
+      setSubmitError(
+        'No pudimos guardar tu solicitud. Revisá tu conexión a internet e intentá de nuevo.'
+      )
     } finally {
       setSubmitting(false)
     }
@@ -326,6 +330,38 @@ export function WizardShell() {
         className="px-4 sm:px-6 pt-0 sm:pt-4"
         style={{ maxWidth: 720, margin: '0 auto' }}
       >
+        {submitError && (
+          <div
+            role="alert"
+            style={{
+              marginBottom: 16,
+              padding: '14px 18px',
+              borderRadius: 14,
+              background: 'rgba(248,113,113,0.12)',
+              border: '1px solid rgba(248,113,113,0.3)',
+              color: '#FECACA',
+              fontSize: 13.5,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <span>{submitError}</span>
+            <button
+              type="button"
+              aria-label="Cerrar aviso"
+              onClick={() => setSubmitError(null)}
+              style={{
+                background: 'none', border: 'none', color: '#FECACA',
+                cursor: 'pointer', fontSize: 16, lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

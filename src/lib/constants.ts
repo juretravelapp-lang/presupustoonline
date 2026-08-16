@@ -1,3 +1,5 @@
+import { QUOTE_ESTADOS } from './estados'
+
 export const CIUDADES_SALIDA = [
   { value: 'tucuman', label: 'Tucumán', aeropuerto: 'TUC - Teniente General Benjamín Matienzo' },
   { value: 'buenos_aires', label: 'Buenos Aires', aeropuerto: 'EZE - Ministro Pistarini' },
@@ -39,13 +41,7 @@ export const PREFERENCIAS_SERVICIOS = [
   { value: 'circuitos_paquetes', label: 'Circuitos / Paquetes',  icon: '🌎' },
 ] as const
 
-export const ESTADOS_LEAD = [
-  { value: 'nuevo', label: 'Nuevo', color: '#3B82F6' },
-  { value: 'contactado', label: 'Contactado', color: '#F59E0B' },
-  { value: 'cotizado', label: 'Cotizado', color: '#8B5CF6' },
-  { value: 'reservado', label: 'Reservado', color: '#10B981' },
-  { value: 'cancelado', label: 'Cancelado', color: '#EF4444' },
-] as const
+export const ESTADOS_LEAD = QUOTE_ESTADOS
 
 export const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',

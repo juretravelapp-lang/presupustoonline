@@ -12,7 +12,7 @@ const schema = z.object({
   apellido:     z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
   dni:          z.string().min(6, 'Mínimo 6 dígitos').max(15, 'Máximo 15 dígitos').regex(/^[\d\.\s\-]+$/, 'Solo números, puntos y guiones'),
   email:        z.string().email('Email inválido').optional().or(z.literal('')),
-  celular:      z.string().min(8, 'Mínimo 8 dígitos').max(30, 'Máximo 30 caracteres').regex(/^[\d\s\-\+]+$/, 'Solo números, guiones, espacios y +'),
+  celular:      z.string().min(8, 'Mínimo 8 dígitos').max(30, 'Máximo 30 caracteres').regex(/^\+?[\d\s\-\()\.]+$/, 'Solo números, guiones, espacios y +'),
 })
 
 type FormData = z.infer<typeof schema>
@@ -123,6 +123,16 @@ export const Step5Contact = forwardRef<StepHandle>(function Step5Contact(_, ref)
             placeholder={field.placeholder}
             className={`input-dark ${err ? 'has-error' : ''}`}
             style={{ paddingLeft: 48, background: isFocused ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)' }}
+            aria-invalid={err ? true : undefined}
+            aria-describedby={err ? `${field.name}-error` : undefined}
+            autoComplete={
+              field.name === 'nombre' ? 'given-name'
+              : field.name === 'apellido' ? 'family-name'
+              : field.name === 'dni' ? 'off'
+              : field.name === 'email' ? 'email'
+              : field.name === 'celular' ? 'tel'
+              : undefined
+            }
             {...register(field.name, {
               onBlur: () => setFocusedField(null)
             })}
@@ -130,7 +140,7 @@ export const Step5Contact = forwardRef<StepHandle>(function Step5Contact(_, ref)
           />
         </div>
         {err && (
-          <p className="error-text" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <p id={`${field.name}-error`} role="alert" className="error-text" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#ef4444' }} />
             {err.message}
           </p>

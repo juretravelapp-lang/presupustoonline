@@ -200,6 +200,10 @@ button, a[role="button"], a, input, textarea, select {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-6px); }
 }
+@keyframes chevronBounce {
+  0%, 100% { transform: translateY(-3px); opacity: 0.5; }
+  50%      { transform: translateY(3px);  opacity: 1; }
+}
 
 /* ─── Utility animation classes ──────────────────────────────────── */
 .animate-fade-in      { animation: fadeIn 0.25s var(--ease-out) both; }
@@ -208,6 +212,7 @@ button, a[role="button"], a, input, textarea, select {
 .animate-bounce-in    { animation: bounceIn 0.5s var(--ease-spring) both; }
 .animate-spin         { animation: spin 1s linear infinite; }
 .animate-float        { animation: float 3s ease-in-out infinite; }
+.animate-chevron-bounce { animation: chevronBounce 1.4s ease-in-out infinite; }
 .animate-pulse-glow   { animation: pulse-glow 2s ease-in-out infinite; }
 
 .stagger-1 { animation-delay: 0.05s; }
@@ -519,4 +524,28 @@ select.input-dark option {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Focus visible accesible */
+:focus-visible {
+  outline: 2px solid #FF6B00;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10000;
+  background: #FF6B00;
+  color: #041224;
+  padding: 10px 16px;
+  border-radius: 0 0 8px 0;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.skip-link:focus {
+  left: 0;
 }

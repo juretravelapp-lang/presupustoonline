@@ -6,10 +6,11 @@ import { QuoteBuilderTab } from './QuoteBuilderTab'
 
 import { QuotePagosTab } from './QuotePagosTab'
 import { useTTOOList, useServiciosList } from '@/hooks/useCatalogQuery'
-import { X, Calendar, DollarSign, FileText, Printer, Save, Clock, Plus, Trash2, MapPin, Video, Phone, Loader2, ClipboardList, CreditCard } from 'lucide-react'
+import { X, Calendar, DollarSign, FileText, Printer, Save, Clock, Plus, Trash2, MapPin, Video, Phone, Loader2, ClipboardList, CreditCard, Plane } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { QuotePDF } from './QuotePDF'
+import { BoardingPassPDF } from './BoardingPassPDF'
 interface ModalProps {
   quote: TravelQuoteRow
   onClose: () => void
@@ -788,6 +789,24 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
                     <>
                       <Printer size={16} />
                       {loading ? 'Generando PDF...' : 'Exportar PDF Cliente'}
+                    </>
+                  )}
+                </PDFDownloadLink>
+
+                <PDFDownloadLink
+                  document={<BoardingPassPDF quote={quote} />}
+                  fileName={`Pase_Abordar_${quote.nombre}_${quote.apellido}.pdf`}
+                  style={{
+                    height: 44, padding: '0 16px', fontSize: 12, textDecoration: 'none',
+                    display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12,
+                    border: '1.5px solid rgba(96,165,250,0.35)', background: 'rgba(96,165,250,0.08)',
+                    color: '#93C5FD', fontWeight: 700,
+                  }}
+                >
+                  {({ loading }) => (
+                    <>
+                      <Plane size={16} />
+                      {loading ? 'Generando...' : 'Pase / Voucher'}
                     </>
                   )}
                 </PDFDownloadLink>

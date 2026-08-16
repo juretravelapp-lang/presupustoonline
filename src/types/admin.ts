@@ -1,3 +1,5 @@
+import type { QuoteEstado } from '@/lib/estados'
+
 export interface Lead {
   id: string
   nombre: string
@@ -17,24 +19,26 @@ export interface Lead {
   preferencias: string[]
   comentarios?: string
   tipo_viaje?: string
-  estado: 'nuevo' | 'contactado' | 'cotizado' | 'reservado' | 'cancelado'
+  estado: QuoteEstado
   created_at: string
   updated_at: string
 }
 
 export interface DashboardStats {
   total: number
-  nuevos: number
-  contactados: number
+  no_cotizado: number
+  en_cotizacion: number
   cotizados: number
-  reservados: number
+  enviado_cliente: number
+  concretados: number
   cancelados: number
 }
 
 export interface LeadFilters {
-  status?: string
+  status?: QuoteEstado | ''
   search?: string
   dateFrom?: string
   dateTo?: string
   destino?: string
+  operador?: string
 }

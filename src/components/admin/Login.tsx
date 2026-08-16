@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { motion, AnimatePresence } from 'motion/react'
 import { Lock, Mail, ArrowRight, ShieldCheck, Loader2 } from 'lucide-react'
+import { navigate } from '@/lib/router'
 
 export function Login() {
   const login = useAuthStore(state => state.login)
@@ -36,8 +37,7 @@ export function Login() {
   }
 
   const goBackHome = () => {
-    window.history.pushState({}, '', '/')
-    window.dispatchEvent(new PopStateEvent('popstate'))
+    navigate('/')
   }
 
   return (

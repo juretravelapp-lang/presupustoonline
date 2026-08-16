@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { useWizardStore } from '@/stores/wizardStore'
 import { KanbanBoard } from './KanbanBoard'
 import { MeetingsBoard } from './MeetingsBoard'
 import { WizardShell } from '@/components/wizard/WizardShell'
 import { useDashboardStats, useAdvancedAnalytics, useQuoteDetail } from '@/hooks/useQuotesQuery'
-import { AnalyticsCharts } from './metrics/AnalyticsCharts'
+const AnalyticsCharts = lazy(() => import('./metrics/AnalyticsCharts').then(m => ({ default: m.AnalyticsCharts })))
+import { OperatorMetrics } from './metrics/OperatorMetrics'
 import { LeadsDataTable } from './metrics/LeadsDataTable'
 import { TTOOBoard } from './TTOOBoard'
 import { ServiciosBoard } from './ServiciosBoard'
@@ -383,6 +384,15 @@ export function Dashboard() {
               <p style={{ fontSize: 13, color: 'rgba(148,163,184,0.6)' }}>No se pudieron recuperar las métricas.</p>
             )}
 
+            {/* Metas por Operador */}
+            {advancedLoading ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#94A3B8', fontSize: 14 }}>
+                <Loader2 className="animate-spin" size={18} /> Cargando métricas por operador...
+              </div>
+            ) : (
+              <OperatorMetrics data={advancedData || []} />
+            )}
+
             {/* Advanced Analytics Charts */}
             <div style={{ marginTop: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
@@ -413,8 +423,10 @@ export function Dashboard() {
                 </select>
               </div>
 
-              <AnalyticsCharts data={advancedData || []} isLoading={advancedLoading} />
-              
+              <Suspense fallback={<div style={{ minHeight: 320, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: 14 }}>Cargando gráficos...</div>}>
+                <AnalyticsCharts data={advancedData || []} isLoading={advancedLoading} />
+              </Suspense>
+
               <LeadsDataTable 
                 data={advancedData || []} 
                 onRowClick={(id) => setSelectedQuoteId(id)} 

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { TravelQuoteRow, CrmPago, InsertPago } from '@/lib/supabase'
 import { usePagosByQuote, useCrearPago, useUpdatePago, useDeletePago } from '@/hooks/usePagosQuery'
-import { Plus, Trash2, Edit3, CheckCircle, Loader2, CreditCard, Wallet, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, Edit3, CheckCircle, Loader2, CreditCard, Wallet, AlertTriangle, MessageCircle } from 'lucide-react'
 
 interface QuotePagosTabProps {
   quote: TravelQuoteRow
@@ -183,6 +183,18 @@ export function QuotePagosTab({ quote }: QuotePagosTabProps) {
 
   const hoy = new Date().toISOString().slice(0, 10)
 
+  const openWhatsAppReminder = () => {
+    const phone = quote.celular?.replace(/[^\d]/g, '')
+    if (!phone) { alert('El lead no tiene número de celular cargado.'); return }
+    const parts: string[] = []
+    if (totals.pendienteARS > 0) parts.push(`ARS $${money(totals.pendienteARS)}`)
+    if (totals.pendienteUSD > 0) parts.push(`USD $${money(totals.pendienteUSD)}`)
+    const quoteRef = quote.ticket_id ? ` (${quote.ticket_id})` : ''
+    const summary = parts.join(' + ') || 'un saldo'
+    const msg = `Hola ${quote.nombre}! 👋 Te escribimos de JURE TRAVEL por tu presupuesto${quoteRef}.\n\nQuedó pendiente de pago: ${summary}. Respondenos para coordinar el pago y seguir avanzando con tu viaje ✈️`
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener')
+  }
+
   const input = (style?: React.CSSProperties) => ({
     height: 40, minHeight: 40, fontSize: 12,
     ...style,
@@ -223,17 +235,31 @@ export function QuotePagosTab({ quote }: QuotePagosTabProps) {
           <CreditCard size={15} style={{ color: '#F59E0B' }} />
           Historial de Pagos ({pagos?.length || 0})
         </h4>
-        <button
-          onClick={openNew}
-          style={{
-            padding: '7px 14px', borderRadius: 10, background: 'rgba(52,211,153,0.1)',
-            border: '1.5px solid rgba(52,211,153,0.3)', color: '#34D399',
-            fontSize: 11, fontWeight: 800, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 5,
-          }}
-        >
-          <Plus size={13} /> Registrar Pago
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={openWhatsAppReminder}
+            title="Enviar recordatorio de pago por WhatsApp"
+            style={{
+              padding: '7px 14px', borderRadius: 10, background: 'rgba(37,211,102,0.1)',
+              border: '1.5px solid rgba(37,211,102,0.3)', color: '#4ADE80',
+              fontSize: 11, fontWeight: 800, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}
+          >
+            <MessageCircle size={13} /> Recordar por WhatsApp
+          </button>
+          <button
+            onClick={openNew}
+            style={{
+              padding: '7px 14px', borderRadius: 10, background: 'rgba(52,211,153,0.1)',
+              border: '1.5px solid rgba(52,211,153,0.3)', color: '#34D399',
+              fontSize: 11, fontWeight: 800, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}
+          >
+            <Plus size={13} /> Registrar Pago
+          </button>
+        </div>
       </div>
 
       {/* Formulario de pago */}

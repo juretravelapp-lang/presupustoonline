@@ -1,0 +1,20 @@
+{
+  "name": "JURE TRAVEL — Presupuesto Online",
+  "short_name": "Jure Travel",
+  "description": "Solicitá tu presupuesto de viaje a medida con JURE TRAVEL.",
+  "lang": "es-AR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A1526",
+  "theme_color": "#0A1526",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

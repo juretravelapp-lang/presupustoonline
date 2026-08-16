@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
 import { type TravelQuoteRow, type HistorialEstado, type CrmMeeting } from '@/lib/supabase'
 import { useQuotesList, useUpdateQuoteStatus, useDeleteQuote } from '@/hooks/useQuotesQuery'
 import { useAuthStore } from '@/stores/authStore'
 import { QuoteDetailModal } from './QuoteDetailModal'
+import { buildCsv, downloadCsv, formatCurrencyForCsv } from '@/lib/exportCsv'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   DndContext, DragOverlay, closestCorners,
@@ -13,6 +14,9 @@ import { CSS } from '@dnd-kit/utilities'
 import {
   Search,
   RefreshCw,
+  Download,
+  FilterX,
+  ChevronDown,
   ArrowLeft,
   ArrowRight,
   User,
@@ -43,6 +47,8 @@ export function KanbanBoard() {
   const [filtroDestino, setFiltroDestino] = useState('')
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('')
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('')
+
+  const hasActiveFilters = !!(filtroOperador || filtroDestino || filtroFechaDesde || filtroFechaHasta)
 
   /* ── Fetch data ─────────────────────────────────────────────── */
   const { data: quotesData, isLoading, refetch } = useQuotesList({ 
@@ -196,6 +202,32 @@ export function KanbanBoard() {
     return 'Sin cotizar'
   }
 
+  const estadoLabelMap = Object.fromEntries(COLUMNS.map(c => [c.id, c.label])) as Record<TravelQuoteRow['estado'], string>
+
+  const handleExportCsv = () => {
+    const rows = filtered.map(q => {
+      const details = q.pricing_detalles
+      const precio = details ? calculateFinalPrice(details) : 0
+      return [
+        q.ticket_id || '',
+        `${q.nombre} ${q.apellido}`,
+        q.email,
+        q.celular,
+        q.destino_personalizado || q.destino || '',
+        q.operador_nombre || '',
+        estadoLabelMap[q.estado],
+        formatCurrencyForCsv(details?.moneda, precio),
+        q.adultos + (q.ninos_2_12 || 0) + (q.bebes_0_2 || 0),
+        q.fecha_salida ? q.fecha_salida.slice(0, 10) : '',
+        q.created_at ? q.created_at.slice(0, 10) : '',
+      ]
+    })
+    downloadCsv(`solicitudes_${new Date().toISOString().slice(0, 10)}.csv`, buildCsv(
+      ['Ticket', 'Cliente', 'Email', 'Celular', 'Destino', 'Operador', 'Estado', 'Precio', 'Pax', 'Fecha Salida', 'Fecha Consulta'],
+      rows
+    ))
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} className="animate-fade-in">
       
@@ -220,6 +252,21 @@ export function KanbanBoard() {
               style={{ paddingLeft: 38, height: 44, minHeight: 44 }}
             />
           </div>
+          <button
+            onClick={handleExportCsv}
+            disabled={filtered.length === 0}
+            style={{
+              width: 44, height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.03)', color: '#F0F4FF',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', transition: 'all 0.2s', opacity: filtered.length === 0 ? 0.4 : 1,
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+            title="Exportar CSV de la vista filtrada"
+          >
+            <Download size={16} />
+          </button>
           <button
             onClick={() => refetch()}
             disabled={isLoading}
@@ -276,6 +323,30 @@ export function KanbanBoard() {
             onChange={e => setFiltroFechaHasta(e.target.value)} 
           />
         </div>
+        <button
+          onClick={() => {
+            setFiltroOperador('')
+            setFiltroDestino('')
+            setFiltroFechaDesde('')
+            setFiltroFechaHasta('')
+          }}
+          disabled={!hasActiveFilters}
+          title="Quitar todos los filtros y ver todas las solicitudes"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 12px',
+            borderRadius: 8, border: '1.5px solid',
+            borderColor: hasActiveFilters ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.08)',
+            background: hasActiveFilters ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.03)',
+            color: hasActiveFilters ? '#FBBF24' : 'rgba(148,163,184,0.6)',
+            fontSize: 12, fontWeight: 700, cursor: hasActiveFilters ? 'pointer' : 'default',
+            marginLeft: 'auto', transition: 'all 0.2s',
+          }}
+          onMouseEnter={e => { if (hasActiveFilters) e.currentTarget.style.background = 'rgba(245,158,11,0.14)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = hasActiveFilters ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.03)' }}
+        >
+          <FilterX size={14} />
+          <span>Ver todo</span>
+        </button>
       </div>
 
       {/* ── Mobile Tab Navigation (sm:hidden) ────────────────────── */}
@@ -614,6 +685,27 @@ import { useDroppable } from '@dnd-kit/core'
 
 function DroppableColumn({ col, totals, colQuotes, children }: any) {
   const { setNodeRef } = useDroppable({ id: col.id })
+  const listRef = useRef<HTMLDivElement>(null)
+  const [overflowing, setOverflowing] = useState(false)
+
+  const checkOverflow = () => {
+    const el = listRef.current
+    if (!el) return
+    setOverflowing(el.scrollHeight > el.clientHeight + 2)
+  }
+
+  useLayoutEffect(() => {
+    checkOverflow()
+    const el = listRef.current
+    if (!el) return
+    el.addEventListener('scroll', checkOverflow)
+    window.addEventListener('resize', checkOverflow)
+    return () => {
+      el.removeEventListener('scroll', checkOverflow)
+      window.removeEventListener('resize', checkOverflow)
+    }
+  }, [colQuotes.length])
+
   return (
     <div
       ref={setNodeRef}
@@ -652,8 +744,39 @@ function DroppableColumn({ col, totals, colQuotes, children }: any) {
       </div>
       
       {/* Cards List (children) */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '55vh', overflowY: 'auto', paddingRight: 2 }}>
-        {children}
+      <div style={{ position: 'relative', flex: 1 }}>
+        <div
+          ref={listRef}
+          style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '55vh', overflowY: 'auto', paddingRight: 2, paddingBottom: overflowing ? 40 : 4 }}
+        >
+          {children}
+        </div>
+        {overflowing && (
+          <>
+            {/* Fade at the bottom to signal more content below */}
+            <div style={{
+              position: 'absolute', left: 0, right: 0, bottom: 0, height: 46, pointerEvents: 'none',
+              background: 'linear-gradient(to top, rgba(9,18,34,0.95) 15%, rgba(9,18,34,0.6) 55%, transparent)',
+              borderRadius: '0 0 10px 0',
+            }} />
+            {/* "More cards" pill */}
+            <div style={{
+              position: 'absolute', left: 0, right: 0, bottom: 0, pointerEvents: 'none',
+              display: 'flex', justifyContent: 'center',
+            }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.25)',
+                color: '#FBBF24', fontSize: 10, fontWeight: 800, letterSpacing: '0.02em',
+                padding: '4px 10px', borderRadius: 99,
+              }}>
+                <ChevronDown size={12} className="animate-chevron-bounce" />
+                <span>Desplazá, hay {colQuotes.length} solicitudes</span>
+                <ChevronDown size={12} className="animate-chevron-bounce" />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

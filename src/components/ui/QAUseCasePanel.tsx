@@ -3,6 +3,7 @@ import { useWizardStore } from '@/stores/wizardStore'
 import { useAuthStore } from '@/stores/authStore'
 import { motion, AnimatePresence } from 'motion/react'
 import { Beaker, Check, Play, RefreshCw, X } from 'lucide-react'
+import { navigate } from '@/lib/router'
 import type { WizardData, WizardStep } from '@/types/wizard'
 
 interface TestCase {
@@ -205,6 +206,9 @@ const TEST_CASES: TestCase[] = [
 ]
 
 export function QAUseCasePanel() {
+  // Herramienta de QA: nunca se monta en producción.
+  if (!import.meta.env.DEV) return null
+
   const [isOpen, setIsOpen] = useState(false)
   const [loadedCase, setLoadedCase] = useState<string | null>(null)
   const { reset, updateData, goToStep, markStepCompleted } = useWizardStore()
@@ -426,17 +430,13 @@ export function QAUseCasePanel() {
               })}
             </div>
 
-            {/* Bypass controls for Log Dashboard */}
+            {/* Bypass controls for Admin Dashboard */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14, marginTop: 4 }}>
               <p style={{ fontSize: 10, fontWeight: 800, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Simular Acceso Dashboard</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <button
                   onClick={() => {
-                    // Navigate to /log if not there
-                    if (window.location.pathname !== '/log') {
-                      window.history.pushState({}, '', '/log')
-                      window.dispatchEvent(new PopStateEvent('popstate'))
-                    }
+                    navigate('/admin')
                     useAuthStore.getState().bypassLogin('admin')
                     setIsOpen(false)
                   }}
@@ -450,10 +450,7 @@ export function QAUseCasePanel() {
                 </button>
                 <button
                   onClick={() => {
-                    if (window.location.pathname !== '/log') {
-                      window.history.pushState({}, '', '/log')
-                      window.dispatchEvent(new PopStateEvent('popstate'))
-                    }
+                    navigate('/admin')
                     useAuthStore.getState().bypassLogin('operador')
                     setIsOpen(false)
                   }}

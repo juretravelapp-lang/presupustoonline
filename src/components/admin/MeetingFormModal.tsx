@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { createMeeting, updateMeeting, deleteMeeting, getQuotes, type CrmMeeting, type TravelQuoteRow } from '@/lib/supabase'
+import { buildIcs, downloadIcs } from '@/lib/ics'
 import { useAuthStore } from '@/stores/authStore'
 import { X, Save, Trash2, Search, Calendar, Clock, Users, Video, Phone, MapPin, Loader2 } from 'lucide-react'
 import { motion } from 'motion/react'
@@ -333,6 +334,31 @@ export function MeetingFormModal({ meeting, preselectedQuoteId, preselectedQuote
                 <p style={{ fontSize: 13, fontWeight: 700, color: '#34D399', marginBottom: 2 }}>📅 Invitación para el cliente</p>
                 <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.8)' }}>Generá un link para que el cliente lo agregue a su Google Calendar.</p>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const startIso = `${fechaInicio}T${horaInicio}:00`
+                  const endIso = fechaFin && horaFin ? `${fechaFin}T${horaFin}:00` : null
+                  const title = `${quoteName ? quoteName + ' — ' : ''}${titulo}`
+                  downloadIcs(
+                    `reunion_${(quoteName || 'jure').replace(/\s+/g, '_').toLowerCase()}_${fechaInicio}.ics`,
+                    buildIcs({
+                      uid: `${Date.now()}@juretravel`,
+                      summary: title,
+                      description: notas || 'Reunión de JURE TRAVEL',
+                      start: startIso,
+                      end: endIso || undefined,
+                      durationMinutes: 60,
+                    })
+                  )
+                }}
+                style={{
+                  padding: '8px 14px', borderRadius: 10, background: 'rgba(52,211,153,0.12)', border: '1.5px solid rgba(52,211,153,0.35)',
+                  color: '#34D399', fontSize: 12, fontWeight: 800, cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0, marginLeft: 12
+                }}
+              >
+                Descargar .ics
+              </button>
               <button
                 type="button"
                 onClick={() => {

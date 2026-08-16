@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import type { TravelQuoteRow } from '@/lib/supabase'
-import { Search, ChevronLeft, ChevronRight, FileText } from 'lucide-react'
+import { buildCsv, downloadCsv, formatCurrencyForCsv } from '@/lib/exportCsv'
+import { getEstadoLabel } from '@/lib/estados'
+import { Search, ChevronLeft, ChevronRight, FileText, Download } from 'lucide-react'
 
 interface LeadsDataTableProps {
   data: Partial<TravelQuoteRow>[]
@@ -45,6 +47,40 @@ export function LeadsDataTable({ data, onRowClick }: LeadsDataTableProps) {
     }
   }
 
+  const handleExportCsv = () => {
+    const rows = filteredData.map(it => {
+      const details = it.pricing_detalles
+      let precioText = ''
+      if (details) {
+        let total = 0
+        if (details.proveedor_seleccionado && (!details.servicios || details.servicios.length === 0)) {
+          total = details.proveedores?.find(p => p.nombre === details.proveedor_seleccionado)?.precio_final || 0
+        } else if (details.servicios && details.servicios.length > 0) {
+          const totalCosto = details.servicios.reduce((acc, s) => acc + s.costo, 0)
+          total = totalCosto + (details.markup_tipo === 'porcentaje' ? totalCosto * (details.markup_valor / 100) : details.markup_valor)
+        }
+        if (total > 0) precioText = formatCurrencyForCsv(details.moneda, total)
+      }
+      return [
+        it.ticket_id || '',
+        `${it.nombre || ''} ${it.apellido || ''}`,
+        it.email || '',
+        it.celular || '',
+        it.destino_personalizado || it.destino || '',
+        it.operador_nombre || '',
+        getEstadoLabel(it.estado as TravelQuoteRow['estado']),
+        precioText,
+        (it.adultos || 0) + (it.ninos_2_12 || 0) + (it.bebes_0_2 || 0),
+        it.fecha_salida ? String(it.fecha_salida).slice(0, 10) : '',
+        it.created_at ? String(it.created_at).slice(0, 10) : '',
+      ]
+    })
+    downloadCsv(`leads_${new Date().toISOString().slice(0, 10)}.csv`, buildCsv(
+      ['Ticket', 'Cliente', 'Email', 'Celular', 'Destino', 'Operador', 'Estado', 'Precio', 'Pax', 'Fecha Salida', 'Fecha Ingreso'],
+      rows
+    ))
+  }
+
   return (
     <div className="glass-card" style={{ padding: 24, borderRadius: 20, background: 'rgba(15,30,53,0.6)', marginTop: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
@@ -56,6 +92,22 @@ export function LeadsDataTable({ data, onRowClick }: LeadsDataTableProps) {
         </div>
         
         <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={handleExportCsv}
+            disabled={filteredData.length === 0}
+            title="Exportar CSV de la vista filtrada"
+            style={{
+              height: 38, padding: '0 14px', borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.03)', color: '#F0F4FF', fontSize: 12, fontWeight: 700,
+              display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', transition: 'all 0.2s',
+              opacity: filteredData.length === 0 ? 0.4 : 1, whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+          >
+            <Download size={14} />
+            Exportar Excel
+          </button>
           <select 
             value={statusFilter}
             onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1) }}

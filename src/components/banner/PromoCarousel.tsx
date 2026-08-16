@@ -16,6 +16,7 @@ export function PromoCarousel() {
   const [current, setCurrent] = useState(0)
   const [direction, setDirection] = useState(1)
   const [motionModule, setMotionModule] = useState<any | null>(null)
+  const [paused, setPaused] = useState(false)
   const isMobile = useIsMobile()
 
   const next = useCallback(() => {
@@ -29,9 +30,20 @@ export function PromoCarousel() {
   }, [])
 
   useEffect(() => {
+    if (paused) return
     const timer = setInterval(next, 6000)
     return () => clearInterval(timer)
-  }, [next])
+  }, [next, paused])
+
+  // Pause autoplay while the tab is hidden to avoid stale/timed-out work
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) setPaused(true)
+      else setPaused(false)
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
 
   // Lazy-load motion/react after initial render to reduce main bundle
   useEffect(() => {
@@ -45,11 +57,6 @@ export function PromoCarousel() {
           import('motion/react').then(mod => { if (mounted) setMotionModule(mod) })
         }, 600)
     return () => { mounted = false; if (typeof id === 'number') clearTimeout(id as number) }
-  }, [])
-
-  // Lazy-load banner image after mount to reduce initial bundle pressure
-  useEffect(() => {
-    // banner is loaded eagerly for LCP; no client-side lazy init needed
   }, [])
 
   const slideVariants = {
@@ -206,7 +213,11 @@ export function PromoCarousel() {
   )
 
   return (
-    <div className={`relative w-full overflow-hidden ${isMobile ? 'h-[320px]' : 'h-[460px] lg:h-[520px]'}`}>
+    <div
+      className={`relative w-full overflow-hidden ${isMobile ? 'h-[320px]' : 'h-[460px] lg:h-[520px]'}`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       {MotionWrapper ? (
         <motionModule.AnimatePresence initial={false} custom={direction} mode="wait">
           <MotionWrapper.div

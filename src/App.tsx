@@ -5,6 +5,7 @@ import { WizardShell } from '@/components/wizard/WizardShell'
 import { SuccessModal } from '@/components/success-modal/SuccessModal'
 import { TooltipProvider } from './components/ui/tooltip'
 import { useAuthStore } from '@/stores/authStore'
+import { QAUseCasePanel } from '@/components/ui/QAUseCasePanel'
 
 const AdminPanel = lazy(() => import('@/components/admin/AdminPanel').then(module => ({ default: module.AdminPanel })))
 const ClientQuoteView = lazy(() => import('@/components/client/ClientQuoteView').then(module => ({ default: module.ClientQuoteView })))
@@ -20,8 +21,16 @@ function App() {
     // Simple path routing listener
     const handleLocationChange = () => {
       setPath(window.location.pathname)
+
+      if (window.location.pathname.startsWith('/quote/')) {
+        document.title = 'Tu Presupuesto | JURE TRAVEL'
+      } else if (window.location.pathname === '/admin') {
+        document.title = 'Panel Admin | JURE TRAVEL'
+      } else {
+        document.title = 'JURE TRAVEL — Presupuesto Online | Viajes a Medida'
+      }
     }
-    
+
     // Listen to custom navigation events
     window.addEventListener('popstate', handleLocationChange)
     
@@ -53,6 +62,12 @@ function App() {
   return (
     <TooltipProvider>
       <div className="min-h-screen">
+        <a
+          href="#wizard"
+          className="skip-link"
+        >
+          Saltar al formulario de presupuesto
+        </a>
         <Header />
 
         <main>
@@ -62,6 +77,7 @@ function App() {
         </main>
 
         <SuccessModal />
+        {import.meta.env.DEV && <QAUseCasePanel />}
       </div>
     </TooltipProvider>
   )
