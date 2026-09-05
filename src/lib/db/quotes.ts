@@ -70,7 +70,7 @@ export interface GetQuotesFilters {
 export async function getQuotes(filters?: GetQuotesFilters) {
   let query = supabase
     .from('travel_quotes')
-    .select('*', { count: 'exact' })
+    .select('*, clientes(nombre, apellido, dni, email, celular)', { count: 'exact' })
     .order('created_at', { ascending: false })
 
   if (filters?.status) {
@@ -117,7 +117,7 @@ export async function getQuotes(filters?: GetQuotesFilters) {
 export async function getQuoteById(id: string) {
   const { data, error } = await supabase
     .from('travel_quotes')
-    .select('*')
+    .select('*, clientes(nombre, apellido, dni, email, celular)')
     .eq('id', id)
     .single()
 

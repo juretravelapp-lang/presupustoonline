@@ -98,6 +98,13 @@ export interface TravelQuoteRow {
   } | null
   ticket_id: string | null
   cliente_id?: string | null
+  clientes?: {
+    nombre: string
+    apellido: string | null
+    dni: string | null
+    email: string | null
+    celular: string | null
+  } | null
   cotizacion_detalles?: CotizacionDetalles | null
   created_at: string
   updated_at: string

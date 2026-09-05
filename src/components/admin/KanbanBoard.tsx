@@ -140,10 +140,13 @@ export function KanbanBoard() {
   /* ── Filter quotes ──────────────────────────────────────────── */
   const filtered = quotes.filter(q => {
     const query = search.toLowerCase()
+    const qNombre = q.clientes?.nombre || q.nombre || ''
+    const qApellido = q.clientes?.apellido || q.apellido || ''
+    const qEmail = q.clientes?.email || q.email || ''
     return (
-      q.nombre.toLowerCase().includes(query) ||
-      q.apellido.toLowerCase().includes(query) ||
-      q.email.toLowerCase().includes(query) ||
+      qNombre.toLowerCase().includes(query) ||
+      qApellido.toLowerCase().includes(query) ||
+      qEmail.toLowerCase().includes(query) ||
       q.destino?.toLowerCase().includes(query) ||
       q.operador_nombre?.toLowerCase().includes(query) ||
       (q.destino_personalizado && q.destino_personalizado.toLowerCase().includes(query)) ||
@@ -210,9 +213,9 @@ export function KanbanBoard() {
       const precio = details ? calculateFinalPrice(details) : 0
       return [
         q.ticket_id || '',
-        `${q.nombre} ${q.apellido}`,
-        q.email,
-        q.celular,
+        `${q.clientes?.nombre || q.nombre} ${q.clientes?.apellido || q.apellido}`,
+        q.clientes?.email || q.email,
+        q.clientes?.celular || q.celular,
         q.destino_personalizado || q.destino || '',
         q.operador_nombre || '',
         estadoLabelMap[q.estado],
@@ -567,7 +570,7 @@ function KanbanCard({ quote, priceText, index, onSelect, onMove, onDelete, nextM
             </span>
           )}
           <h4 style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', lineHeight: 1.2 }}>
-            {quote.nombre} {quote.apellido}
+            {quote.clientes?.nombre || quote.nombre} {quote.clientes?.apellido || quote.apellido}
           </h4>
         </div>
         <button
@@ -649,7 +652,7 @@ function KanbanCard({ quote, priceText, index, onSelect, onMove, onDelete, nextM
         
         {/* Quick WhatsApp Link */}
         <a
-          href={`https://wa.me/${quote.celular.replace(/[^\d]/g, '')}`}
+          href={`https://wa.me/${(quote.clientes?.celular || quote.celular).replace(/[^\d]/g, '')}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{

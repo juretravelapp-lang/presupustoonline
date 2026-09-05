@@ -66,7 +66,14 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
 
   /* ── General Edit Mode ───────────────────────────────────────── */
   const [editMode, setEditMode] = useState(false)
-  const [editedQuote, setEditedQuote] = useState<TravelQuoteRow>(quote)
+  const [editedQuote, setEditedQuote] = useState<TravelQuoteRow>({
+    ...quote,
+    nombre: quote.clientes?.nombre || quote.nombre || '',
+    apellido: quote.clientes?.apellido || quote.apellido || '',
+    dni: quote.clientes?.dni || quote.dni || '',
+    email: quote.clientes?.email || quote.email || '',
+    celular: quote.clientes?.celular || quote.celular || '',
+  })
 
   const saveGeneralDetails = async () => {
     setSaving(true)
@@ -224,7 +231,7 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <h3 style={{ fontSize: 18, fontWeight: 800, color: '#F0F4FF', marginTop: 2 }}>
-                {quote.nombre} {quote.apellido} {quote.ticket_id ? ` - ${quote.ticket_id}` : ''}
+                {quote.clientes?.nombre || quote.nombre} {quote.clientes?.apellido || quote.apellido} {quote.ticket_id ? ` - ${quote.ticket_id}` : ''}
               </h3>
               <button
                 onClick={() => {
@@ -315,9 +322,9 @@ export function QuoteDetailModal({ quote, onClose, onStatusChange: _onStatusChan
                     </div>
                   ) : (
                     <>
-                      <p style={{ fontSize: 13, fontWeight: 600 }}>DNI: {quote.dni}</p>
-                      <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Email: {quote.email}</p>
-                      <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Celular: {quote.celular}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600 }}>DNI: {quote.clientes?.dni || quote.dni}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Email: {quote.clientes?.email || quote.email}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>Celular: {quote.clientes?.celular || quote.celular}</p>
                     </>
                   )}
                 </div>

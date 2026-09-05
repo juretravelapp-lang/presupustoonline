@@ -111,16 +111,17 @@ export function WizardShell() {
     setSubmitting(true)
     setSubmitError(null)
     try {
-      const destinosSeleccionados = data.destination.destinos_seleccionados || []
-      const destinosCustom = data.destination.destinos_custom || []
+      const currentData = useWizardStore.getState().data
+      const destinosSeleccionados = currentData.destination.destinos_seleccionados || []
+      const destinosCustom = currentData.destination.destinos_custom || []
       const allDestinos = [...destinosSeleccionados, ...destinosCustom]
       const destinosText = allDestinos.map(d => d.replace(/_/g, ' ')).join(', ')
 
-      let globalSalida = data.dates.fecha_salida
-      let globalRegreso = data.dates.fecha_regreso
-      if (Object.keys(data.dates.fechas_por_destino).length > 0) {
-        const allSalidas = Object.values(data.dates.fechas_por_destino).map(f => f.fecha_salida).filter(Boolean)
-        const allRegresos = Object.values(data.dates.fechas_por_destino).map(f => f.fecha_regreso).filter(Boolean)
+      let globalSalida = currentData.dates.fecha_salida
+      let globalRegreso = currentData.dates.fecha_regreso
+      if (Object.keys(currentData.dates.fechas_por_destino).length > 0) {
+        const allSalidas = Object.values(currentData.dates.fechas_por_destino).map(f => f.fecha_salida).filter(Boolean)
+        const allRegresos = Object.values(currentData.dates.fechas_por_destino).map(f => f.fecha_regreso).filter(Boolean)
         if (allSalidas.length) globalSalida = allSalidas.sort()[0]
         if (allRegresos.length) globalRegreso = allRegresos.sort().reverse()[0]
       }
@@ -132,29 +133,29 @@ export function WizardShell() {
       useWizardStore.getState().setGeneratedTicket(ticket)
 
       const quoteData: InsertQuote = {
-        nombre: data.personal.nombre,
-        apellido: data.personal.apellido,
-        dni: data.personal.dni,
-        email: data.personal.email,
-        celular: data.personal.celular,
-        ciudad_salida: data.origin.ciudad_salida?.replace(/_/g, ' ') || null,
-        aeropuerto_salida: data.origin.aeropuerto_salida || null,
+        nombre: currentData.personal.nombre,
+        apellido: currentData.personal.apellido,
+        dni: currentData.personal.dni,
+        email: currentData.personal.email,
+        celular: currentData.personal.celular,
+        ciudad_salida: currentData.origin.ciudad_salida?.replace(/_/g, ' ') || null,
+        aeropuerto_salida: currentData.origin.aeropuerto_salida || null,
         destino: destinosText || null,
-        destino_personalizado: destinosCustom.length > 0 ? destinosCustom.join(', ') : (data.destination.destino_personalizado || null),
+        destino_personalizado: destinosCustom.length > 0 ? destinosCustom.join(', ') : (currentData.destination.destino_personalizado || null),
         destinos: allDestinos,
-        tipo_fecha: data.dates.tipo_fecha === 'exacta' ? 'exacta' : 'flexible',
+        tipo_fecha: currentData.dates.tipo_fecha === 'exacta' ? 'exacta' : 'flexible',
         fecha_salida: globalSalida || null,
         fecha_regreso: globalRegreso || null,
-        rango_fecha_inicio: data.dates.tipo_fecha === 'exacta' ? (globalSalida || null) : null,
-        rango_fecha_fin: data.dates.tipo_fecha === 'exacta' ? (globalRegreso || null) : null,
-        mes_preferido: data.dates.mes_preferido || null,
-        adultos: data.passengers.adultos,
-        ninos_2_12: data.passengers.ninos_2_12,
-        bebes_0_2: data.passengers.bebes_0_2,
-        edades_adultos: data.passengers.edades_adultos || null,
-        preferencias: data.preferences.preferencias,
-        comentarios: data.comments.comentarios || null,
-        tipo_viaje: data.comments.tipo_viaje || null,
+        rango_fecha_inicio: currentData.dates.tipo_fecha === 'exacta' ? (globalSalida || null) : null,
+        rango_fecha_fin: currentData.dates.tipo_fecha === 'exacta' ? (globalRegreso || null) : null,
+        mes_preferido: currentData.dates.mes_preferido || null,
+        adultos: currentData.passengers.adultos,
+        ninos_2_12: currentData.passengers.ninos_2_12,
+        bebes_0_2: currentData.passengers.bebes_0_2,
+        edades_adultos: currentData.passengers.edades_adultos || null,
+        preferencias: currentData.preferences.preferencias,
+        comentarios: currentData.comments.comentarios || null,
+        tipo_viaje: currentData.comments.tipo_viaje || null,
         ip_address: null,
         origen_consulta: isOperatorMode ? 'operador' : 'web',
         estado: 'no_cotizado',
